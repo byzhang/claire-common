@@ -35,7 +35,7 @@ public:
     std::string ToString() const
     {
         char buf[32];
-        snprintf(buf, sizeof buf, "%u", count_);
+        snprintf(buf, sizeof buf, "%ld", count_.load(boost::memory_order_relaxed));
         return buf;
     }
 
@@ -45,7 +45,7 @@ public:
     }
 
 private:
-    std::string name_;
+    const std::string name_;
     boost::atomic<int64_t> count_;
 };
 

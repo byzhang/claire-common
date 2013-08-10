@@ -3,7 +3,7 @@
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 
 #include <claire/common/stats/Stats.h>
-#include <claire/common/stats/Singleton.h>
+#include <claire/common/threading/Singleton.h>
 
 using namespace claire;
 

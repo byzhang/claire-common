@@ -68,15 +68,17 @@ public:
     }
 };
 
-std::vector<Metric*> GetAllMetrics()
+inline std::vector<Metric*> GetAllMetrics()
 {
-    Stats::default_instance()->GetAllMetrics();
+    return Stats::default_instance()->GetAllMetrics();
 }
 
-std::vector<Counter*> GetAllCounters()
+inline std::vector<Counter*> GetAllCounters()
 {
-    Stats::default_instance()->GetAllCounters();
+    return Stats::default_instance()->GetAllCounters();
 }
+
+} // namespace claire
 
 #define DEFINE_METRIC(name) \
     namespace claire { \
@@ -84,7 +86,6 @@ std::vector<Counter*> GetAllCounters()
     ::claire::MetricRegisterer cm_##name(&METRIC_##name); \
     using ::claire::METRIC_##name; \
     }
-}
 
 #define DEFINE_COUNTER(name) \
     namespace claire { \
