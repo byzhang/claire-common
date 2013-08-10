@@ -14,6 +14,8 @@ set(common_SRCS
     file/FileUtil.cc
     system/ProcessInfo.cc
     Exception.cc
+    stats/Histogram.cc
+    stats/Stats.cc
   )
 
 add_library(claire_common ${common_SRCS})
