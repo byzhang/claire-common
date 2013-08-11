@@ -7,6 +7,8 @@
 
 #include <vector>
 
+#include <boost/bind.hpp>
+#include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 
 #include <claire/common/stats/Gauge.h>
@@ -21,17 +23,24 @@ class Stats : boost::noncopyable
 public:
     static Stats* default_instance();
 
+    ~Stats()
+    {
+        for (auto it = gauges_.begin(); it != gauges_.end(); ++it)
+        {
+            delete (*it);
+        }
+    }
+
     void AddGauge(Gauge* gauge)
     {
         MutexLock lock(mutex_);
         gauges_.push_back(gauge);
     }
 
-    std::vector<Gauge*> GetAllGauges() const
+    std::vector<Gauge*> GetAllGauges()
     {
         MutexLock lock(mutex_);
-        std::vector<Gauge*> v(gauges_.begin(), gauges_.end());
-        return v;
+        return gauges_;
     }
 
     void AddMetric(Metric* metric)
@@ -62,23 +71,51 @@ private:
     mutable Mutex mutex_;
     std::vector<Metric*> metrics_;
     std::vector<Counter*> counters_;
-    std::ptr_vector<Gauge> gauges_;
+    std::vector<Gauge*> gauges_;
 };
 
 class GaugeRegisterer : boost::noncopyable
 {
 public:
     template<typename T>
-    GaugeRegisterer(const T* v)
+    GaugeRegisterer(const char* name, const T* v)
     {
-        Gauge* gauge = new GaugeBindVariable(v);
+        Gauge* gauge = new GaugeBindVariable<T>(name, v);
         ::claire::Stats::default_instance()->AddGauge(gauge);
     }
 
     template<typename T>
-    GaugeRegisterer(const boost::function<T()>& func)
+    GaugeRegisterer(const char* name, T(*func)())
     {
-        Gauge* gauge = new GaugeBindFunction(func);
+        Gauge* gauge = new GaugeBindFunction<T>(name, boost::bind(func));
+        ::claire::Stats::default_instance()->AddGauge(gauge);
+    }
+
+    template<typename CLASS, typename T>
+    GaugeRegisterer(const char* name, T(CLASS::*func)(), CLASS* obj)
+    {
+        Gauge* gauge = new GaugeBindFunction<T>(name, boost::bind(func, obj));
+        ::claire::Stats::default_instance()->AddGauge(gauge);
+    }
+
+    template<typename CLASS, typename T>
+    GaugeRegisterer(const char* name, T(CLASS::*func)(), const CLASS* obj)
+    {
+        Gauge* gauge = new GaugeBindFunction<T>(name, boost::bind(func, obj));
+        ::claire::Stats::default_instance()->AddGauge(gauge);
+    }
+
+    template<typename CLASS, typename T>
+    GaugeRegisterer(const char* name, T(CLASS::*func)() const, CLASS* obj)
+    {
+        Gauge* gauge = new GaugeBindFunction<T>(name, boost::bind(func, obj));
+        ::claire::Stats::default_instance()->AddGauge(gauge);
+    }
+
+    template<typename CLASS, typename T>
+    GaugeRegisterer(const char* name, T(CLASS::*func)() const, const CLASS* obj)
+    {
+        Gauge* gauge = new GaugeBindFunction<T>(name, boost::bind(func, obj));
         ::claire::Stats::default_instance()->AddGauge(gauge);
     }
 };
@@ -101,7 +138,7 @@ public:
     }
 };
 
-inline std::vector<<Gauge*> GetAllGauges()
+inline std::vector<Gauge*> GetAllGauges()
 {
     return Stats::default_instance()->GetAllGauges();
 }
@@ -118,10 +155,8 @@ inline std::vector<Counter*> GetAllCounters()
 
 } // namespace claire
 
-#define DEFINE_GAUGE(name, value) \
-    namespace claire { \
-    ::claire::GaugeRegisterer cg_##name(name, value); \
-    }
+#define DEFINE_GAUGE(name, ...) \
+    ::claire::GaugeRegisterer cg_##name(#name, __VA_ARGS__)
 
 #define DEFINE_METRIC(name) \
     namespace claire { \

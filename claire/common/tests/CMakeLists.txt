@@ -7,4 +7,6 @@ target_link_libraries(counter_test claire_common)
 add_executable(metric_test Metric_test.cc)
 target_link_libraries(metric_test claire_common)
 
+add_executable(gauge_test Gauge_test.cc)
+target_link_libraries(gauge_test claire_common)
 
