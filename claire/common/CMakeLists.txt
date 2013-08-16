@@ -13,7 +13,7 @@ set(common_SRCS
     time/Timestamp.cc
     file/FileUtil.cc
     system/ProcessInfo.cc
-    Exception.cc
+    base/Exception.cc
     stats/Histogram.cc
     stats/Stats.cc
   )

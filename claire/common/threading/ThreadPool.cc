@@ -6,7 +6,7 @@
 
 #include <boost/bind.hpp>
 
-#include <claire/common/Exception.h>
+#include <claire/common/base/Exception.h>
 #include <claire/common/logging/Logging.h>
 
 using namespace claire;

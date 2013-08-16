@@ -11,7 +11,7 @@
 #include <boost/weak_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <claire/common/Exception.h>
+#include <claire/common/base/Exception.h>
 #include <claire/common/logging/Logging.h>
 #include <claire/common/threading/ThisThread.h>
 

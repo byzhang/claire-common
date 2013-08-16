@@ -41,7 +41,7 @@
 #include <ostream>
 #include <sstream>
 
-#include <claire/common/Likely.h>
+#include <claire/common/base/Likely.h>
 #include <claire/common/logging/LogMessage.h>
 
 // Make a bunch of macros for logging.  The way to log things is to stream
