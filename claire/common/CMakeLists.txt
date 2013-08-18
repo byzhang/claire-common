@@ -5,13 +5,13 @@ set(common_SRCS
     logging/LogMessage.cc
     logging/Logger.cc
     logging/Logging.cc
-    string/StringPiece.cc
-    string/StringUtil.cc
+    strings/StringPiece.cc
+    strings/StringUtil.cc
     threading/Thread.cc
     threading/ThreadPool.cc
     threading/ThisThread.cc
     time/Timestamp.cc
-    file/FileUtil.cc
+    files/FileUtil.cc
     system/ProcessInfo.cc
     base/Exception.cc
     stats/Histogram.cc

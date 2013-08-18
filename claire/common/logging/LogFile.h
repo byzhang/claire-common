@@ -12,7 +12,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
-#include <claire/common/file/FileUtil.h>
+#include <claire/common/files/FileUtil.h>
 #include <claire/common/threading/Mutex.h>
 
 namespace claire {

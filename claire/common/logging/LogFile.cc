@@ -10,7 +10,7 @@
 
 #include <gflags/gflags.h>
 
-#include <claire/common/file/FileUtil.h>
+#include <claire/common/files/FileUtil.h>
 #include <claire/common/time/Timestamp.h>
 #include <claire/common/threading/Mutex.h>
 #include <claire/common/system/ProcessInfo.h>

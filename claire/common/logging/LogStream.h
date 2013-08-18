@@ -8,8 +8,8 @@
 #include <string>
 
 #include <claire/common/logging/LogBuffer.h>
-#include <claire/common/string/StringUtil.h>
-#include <claire/common/string/StringPiece.h>
+#include <claire/common/strings/StringUtil.h>
+#include <claire/common/strings/StringPiece.h>
 
 namespace claire {
 
