@@ -1,9 +1,0 @@
-#ifndef _CLAIRE_COMMON_EVENTLOOP_CHANNEL_H_
-#define _CLAIRE_COMMON_EVENTLOOP_CHANNEL_H_
-
-namespace claire
-{
-
-}
-
-#endif // _CLAIRE_COMMON_EVENTLOOP_CHANNEL_H_
