@@ -4,6 +4,8 @@
 
 #include <claire/common/logging/LogStream.h>
 
+#include <limits>
+
 const static size_t kMaxNumericSize = 32;
 
 static_assert(static_cast<int>(kMaxNumericSize - 10) > std::numeric_limits<double>::digits10, 

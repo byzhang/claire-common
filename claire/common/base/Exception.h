@@ -25,15 +25,15 @@ public:
         FillStackTrace();
     }
 
-    virtual ~Exception() noexcept
+    virtual ~Exception() throw()
     { }
 
-    virtual const char* what() const noexcept
+    virtual const char* what() const throw()
     {
         return message_.c_str();
     }
 
-    const char* StackTrace() const noexcept
+    const char* StackTrace() const
     {
         return stack_.c_str();
     }
