@@ -16,6 +16,7 @@ set(common_SRCS
     base/Exception.cc
     stats/Histogram.cc
     stats/Stats.cc
+    stats/HistogramImpl.cc
   )
 
 add_library(claire_common ${common_SRCS})

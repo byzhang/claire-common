@@ -16,7 +16,8 @@ class Metric : boost::noncopyable
 {
 public:
     Metric(const char* nameArg)
-        : name_(nameArg)
+        : name_(nameArg),
+          histogram_(0.01, 10000)
     { }
 
     std::string name() const
@@ -30,34 +31,30 @@ public:
         histogram_.Clear();
     }
 
-    void Add(double v)
+    void Add(int64_t v)
     {
         MutexLock lock(mutex_);
         histogram_.Add(v);
     }
 
-    double min() const
+    int64_t min() const
     {
         MutexLock lock(mutex_);
-        return histogram_.get_min();
+        return histogram_.min();
     }
 
-    double max() const
+    int64_t max() const
     {
         MutexLock lock(mutex_);
-        return histogram_.get_max();
+        return histogram_.max();
     }
 
-    double sum() const
+    int64_t median() const
     {
         MutexLock lock(mutex_);
-        return histogram_.get_sum();
-    }
-
-    double median() const
-    {
-        MutexLock lock(mutex_);
-        return histogram_.Median();
+        double q = 50.00;
+        auto v = histogram_.GetQuantiles(&q, 1);
+        return v[0];
     }
 
 private:
