@@ -555,7 +555,7 @@ DECLARE_CHECK_STROP_IMPL(strcasecmp, false)
     while (false) CHECK_STRCASENE(str1, str2)
 
 #define DCHECK_ERR(invocation) \
-    while (fale) CHECK_ERR(invocation)
+    while (false) CHECK_ERR(invocation)
 
 #endif  // NDEBUG
 
