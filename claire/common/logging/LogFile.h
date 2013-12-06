@@ -21,6 +21,7 @@ class LogFile : boost::noncopyable
 {
 public:
     LogFile(bool thread_safe);
+    ~LogFile();
 
     void Append(const char* data, size_t length);
     void Flush();

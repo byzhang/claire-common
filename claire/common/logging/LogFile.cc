@@ -25,6 +25,8 @@ namespace claire {
 const static int kCheckTimeRoll = 1024;
 const static int kSecondsPerDay = 60*60*24;
 
+LogFile::~LogFile() {}
+
 LogFile::LogFile(bool thread_safe)
     : base_name_(::google::ProgramInvocationShortName()),
       count_(0),
