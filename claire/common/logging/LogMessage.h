@@ -1,3 +1,7 @@
+// Copyright (c) 2013 The claire-common Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file. See the AUTHORS file for names of contributors.
+
 // Copyright (c) 1999, Google Inc.
 // All rights reserved.
 //
@@ -85,7 +89,6 @@ public:
     };
 
     LogMessage(SourceFile file, int line, LogSeverity severity, int ctr);
-
     LogMessage(SourceFile file, int line, LogSeverity severity, const char* func);
 
     // Two special constructors that generate reduced amounts of code at
@@ -137,10 +140,10 @@ private:
 class LogMessageVoidify
 {
 public:
-    LogMessageVoidify() { }
+    LogMessageVoidify() {}
     // This has to be an operator with a precedence lower than << but
     // higher than ?:
-    void operator&(LogStream&) { }
+    void operator&(LogStream&) {}
 };
 
 // This class happens to be thread-hostile because all instances share
@@ -150,17 +153,12 @@ class LogMessageFatal : boost::noncopyable
 {
 public:
     LogMessageFatal(const char* file, int line)
-        : message_(LogMessage::SourceFile(file), line, LogSeverity::FATAL)
-    { }
+        : message_(LogMessage::SourceFile(file), line, LogSeverity::FATAL) {}
 
     LogMessageFatal(const char* file, int line, const CheckOpString& result)
-        : message_(LogMessage::SourceFile(file), line, result)
-    { }
+        : message_(LogMessage::SourceFile(file), line, result) {}
 
-    LogStream& stream()
-    {
-        return message_.stream();
-    }
+    LogStream& stream() { return message_.stream(); }
 
 private:
     LogMessage message_;
@@ -172,20 +170,19 @@ public:
     ErrnoLogMessage(const char* file, int line, LogSeverity severity, int ctr)
         : message_(LogMessage::SourceFile(file), line, severity, ctr),
           preserved_errno_(errno)
-    { }
+    {}
 
     // Postpends ": strerror_tl(errno) [errno]".
     ~ErrnoLogMessage();
 
-    LogStream& stream()
-    {
-        return message_.stream();
-    }
+    LogStream& stream() { return message_.stream(); }
 
 private:
     LogMessage message_;
     int preserved_errno_;
 };
+
+const char * strerror_tl(int saved_errno);
 
 } // namespace claire
 

@@ -1,3 +1,7 @@
+// Copyright (c) 2013 The claire-common Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file. See the AUTHORS file for names of contributors.
+
 // Copyright 2001-2010 The RE2 Authors.  All Rights Reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
@@ -17,7 +21,7 @@
 #include <claire/common/strings/StringPiece.h>
 #include <claire/common/logging/Logging.h>
 
-using namespace claire;
+namespace claire {
 
 bool StringPiece::_equal(const StringPiece& x, const StringPiece& y)
 {
@@ -102,3 +106,4 @@ StringPiece StringPiece::substr(size_type pos, size_type n) const
 
 const StringPiece::size_type StringPiece::npos = size_type(-1);
 
+} // namespace claire

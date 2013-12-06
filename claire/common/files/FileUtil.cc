@@ -1,27 +1,33 @@
-// Use of this source code is governed by a BSD-style license
-// that can be found in the License file.
+// Copyright (c) 2013 The claire-common Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file. See the AUTHORS file for names of contributors.
+
+// Copyright (c) 2011 The LevelDB Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file. See the AUTHORS file for names of contributors.
 
 #include <claire/common/files/FileUtil.h>
 
-#include <dirent.h>
+#include <time.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <dirent.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/file.h>
-#include <time.h>
-#include <unistd.h>
+
+#include <claire/common/logging/Logging.h>
 
 namespace claire {
 namespace FileUtil {
 
-Status SequentialFile::Read(char* scratch, size_t n, StringPiece* result)
+Status SequentialFile::Read(size_t n, StringPiece* result, char* scratch)
 {
     Status s = kOk;
-
     size_t r = ::fread_unlocked(scratch, 1, n, fp_);
     if (r < n)
     {
@@ -41,7 +47,6 @@ Status SequentialFile::Read(char* scratch, size_t n, StringPiece* result)
     {
         *result = StringPiece(scratch, r);
     }
-
     return s;
 }
 
@@ -52,14 +57,12 @@ Status SequentialFile::Skip(uint64_t n)
         PLOG(ERROR) << "SequentialFile::Skip" << filename_ << " failed: ";
         return kIOError;
     }
-
     return kOk;
 }
 
-Status RandomAccessFile::Read(char* scratch, uint64_t offset, size_t n, StringPiece* result) const
+Status RandomAccessFile::Read(uint64_t offset, size_t n, StringPiece* result, char* scratch) const
 {
     Status s = kOk;
-
     ssize_t r = ::pread(fd_, scratch, n, static_cast<off_t>(offset));
     if (r < 0)
     {
@@ -71,16 +74,15 @@ Status RandomAccessFile::Read(char* scratch, uint64_t offset, size_t n, StringPi
     {
         *result = StringPiece(scratch, (r < 0) ? 0 : r);
     }
-
     return s;
 }
 
-Status WritableFile::Append(const char *msg, size_t len)
+Status WritableFile::Append(const StringPiece& data)
 {
-    size_t n = ::fwrite_unlocked(msg, 1, len, fp_);
-    while (n < len)
+    size_t n = ::fwrite_unlocked(data.data(), 1, data.length(), fp_);
+    while (n < data.length())
     {
-        size_t x = ::fwrite_unlocked(msg + n, 1, len - n, fp_);
+        size_t x = ::fwrite_unlocked(data.data() + n, 1, data.length() - n, fp_);
         if (x == 0)
         {
             int err = ::ferror(fp_);
@@ -89,14 +91,13 @@ Status WritableFile::Append(const char *msg, size_t len)
                 PLOG(ERROR) << "WritableFile::Append " << filename_ << " failed :";
             }
 
-            writtenBytes_ += n;
+            written_bytes_ += n;
             return kIOError;
         }
-
         n += x;
     }
 
-    writtenBytes_ += n;
+    written_bytes_ += n;
     return kOk;
 }
 
@@ -107,7 +108,6 @@ Status WritableFile::Close()
         PLOG(ERROR) << "WritableFile Close " << filename_ << " failed: ";
         return kIOError;
     }
-
     return kOk;
 }
 
@@ -118,7 +118,6 @@ Status WritableFile::Flush()
         PLOG(ERROR) << "WritableFile::Flush " << filename_ << " failed: ";
         return kIOError;
     }
-
     return kOk;
 }
 
@@ -137,7 +136,6 @@ Status NewSequentialFile(const std::string& fname, SequentialFile** result)
     {
         *result = new SequentialFile(fname, fp);
     }
-
     return s;
 }
 
@@ -156,7 +154,6 @@ Status NewRandomAccessFile(const std::string& fname, RandomAccessFile** result)
     {
         *result = new RandomAccessFile(fname, fd);
     }
-
     return s;
 }
 
@@ -240,7 +237,6 @@ Status DeleteFile(const std::string& fname)
         PLOG(ERROR) << "DeleteFile unlink " << fname << " failed: ";
         return kIOError;
     }
-
     return kOk;
 }
 
@@ -251,7 +247,6 @@ Status CreateDir(const std::string& name)
         PLOG(ERROR) << "CreateDir mkdir " << name << " failed: ";
         return kIOError;
     }
-
     return kOk;
 }
 
@@ -262,7 +257,6 @@ Status DeleteDir(const std::string& name)
         PLOG(ERROR) << "DeleteDir rmdir " << name << " failed: ";
         return kIOError;
     }
-
     return kOk;
 }
 
@@ -289,7 +283,6 @@ Status RenameFile(const std::string& src, const std::string& target)
         PLOG(ERROR) << "RenameFile rename " << src << " to " << target << " failed: ";
         return kIOError;
     }
-
     return kOk;
 }
 
@@ -344,14 +337,12 @@ Status LockFile(const std::string& fname, FileLock** lock)
         my_lock->fd_ = fd;
         *lock = my_lock;
     }
-
     return s;
 }
 
 Status UnlockFile(FileLock* lock)
 {
     Status s = kOk;
-
     if (LockOrUnlock(lock->fd_, false) == -1)
     {
         s = kIOError;
@@ -378,7 +369,7 @@ Status ReadFileToString(const std::string& fname, std::string* data)
     while (true)
     {
         StringPiece fragment;
-        s = file->Read(space, sizeof space, &fragment);
+        s = file->Read(sizeof space, &fragment, space);
         if (s)
         {
             break;
@@ -402,16 +393,15 @@ Status SymLink(const std::string& oldname, const std::string& newname)
         PLOG(ERROR) << "SymLink " << oldname << " failed :";
         return kIOError;
     }
-
     return kOk;
 }
 
-bool isSymLink(const std::string& filename)
+bool IsSymLink(const std::string& fname)
 {
     struct stat sbuf;
-    if (::lstat(filename.c_str(), &sbuf))
+    if (::lstat(fname.c_str(), &sbuf))
     {
-        PLOG(ERROR) << "isSymLink lstat " << filename << " failed: ";
+        PLOG(ERROR) << "isSymLink lstat " << fname << " failed: ";
         return false;
     }
 
@@ -419,31 +409,28 @@ bool isSymLink(const std::string& filename)
     {
         return true;
     }
-
     return false;
 }
 
-Status ReadLink(const std::string& filename, std::string* data)
+Status ReadLink(const std::string& fname, std::string* data)
 {
     data->clear();
 
-    char buf[1024];
-    ssize_t len = ::readlink(filename.c_str(), buf, sizeof buf);
-    if (len == -1)
+    char name[1024];
+    ssize_t n = ::readlink(fname.c_str(), name, sizeof name);
+    if (n == -1)
     {
-        PLOG(ERROR) << "ReadLink " << filename << " failed: ";
+        PLOG(ERROR) << "ReadLink " << fname << " failed: ";
         return kIOError;
     }
     else
     {
-        assert(len < static_cast<ssize_t>(sizeof(buf)));
-        buf[len] = '\0';
+        DCHECK(n < static_cast<ssize_t>(sizeof(name)));
     }
 
-    data->append(buf, strlen(buf));
+    data->append(name, n);
     return kOk;
 }
 
 } // namespace FileUtil
 } // namespace claire
-

@@ -1,4 +1,4 @@
-// Copyright (c) 2013 The Claire Authors. All rights reserved.
+// Copyright (c) 2013 The claire-common Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 
@@ -13,36 +13,24 @@ namespace claire {
 class Exception : public std::exception
 {
 public:
-    explicit Exception(const char* msg)
-        : message_(msg)
-    {
-        FillStackTrace();
-    }
+    explicit Exception(const char* what);
+    explicit Exception(const std::string& what);
 
-    explicit Exception(const std::string& msg)
-        : message_(msg)
-    {
-        FillStackTrace();
-    }
-
-    virtual ~Exception() throw()
-    { }
+    virtual ~Exception() throw() {}
 
     virtual const char* what() const throw()
     {
-        return message_.c_str();
+        return what_.c_str();
     }
 
-    const char* StackTrace() const
+    const char* stack_trace() const throw()
     {
-        return stack_.c_str();
+        return stack_trace_.c_str();
     }
 
 private:
-    void FillStackTrace();
-
-    std::string message_;
-    std::string stack_;
+    std::string what_;
+    std::string stack_trace_;
 };
 
 } // namespace claire

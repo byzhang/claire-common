@@ -1,4 +1,4 @@
-// Copyright (c) 2013 The Claire Authors. All rights reserved.
+// Copyright (c) 2013 The claire-common Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 
@@ -22,7 +22,7 @@ class LogBuffer : boost::noncopyable
 {
 public:
     LogBuffer()
-        : cur_(data_)
+        : current_(data_)
     {
         set_cookie(CookieStart);
     }
@@ -32,53 +32,37 @@ public:
         set_cookie(CookieEnd);
     }
 
-    void Append(const char* msg, size_t len)
+    void Append(const char* d, size_t l)
     {
         // FIXME: use stack vector!!!
-        if (static_cast<size_t>(avail()) > len)
+        if (static_cast<size_t>(avail()) > l)
         {
-            memcpy(cur_, msg, len);
-            cur_ += len;
+            memcpy(current_, d, l);
+            current_ += l;
         }
         else
         {
             if (avail() > 0)
             {
-                memcpy(cur_, msg, avail());
-                cur_ += avail();
+                memcpy(current_, d, avail());
+                current_ += avail();
             }
         }
     }
 
-    const char* data() const
-    {
-        return data_;
-    }
+    const char* data() const { return data_; }
+    char* current() { return current_; }
+    size_t length() const { return current_ - data_; }
+    size_t avail() const { return end() - current_; }
 
-    size_t length() const
+    void Add(size_t l)
     {
-        return cur_ - data_;
-    }
-
-    // write to data_ directly
-    char* current()
-    {
-        return cur_;
-    }
-
-    size_t avail() const
-    {
-        return end() - cur_;
-    }
-
-    void Add(size_t len)
-    {
-        cur_ += len;
+        current_ += l;
     }
 
     void Reset()
     {
-        cur_ = data_;
+        current_ = data_;
     }
 
     void bzero()
@@ -113,7 +97,7 @@ private:
     void (*cookie_)();
 
     char data_[SIZE];
-    char* cur_;
+    char* current_;
 };
 
 } // namespace claire

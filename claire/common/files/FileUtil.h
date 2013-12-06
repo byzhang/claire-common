@@ -1,7 +1,7 @@
-// Use of this source code is governed by a BSD-style license
-// that can be found in the License file.
-//
-// taken from leveldb
+// Copyright (c) 2013 The claire-common Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file. See the AUTHORS file for names of contributors.
+
 // Copyright (c) 2011 The LevelDB Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
@@ -9,17 +9,17 @@
 #ifndef _CLAIRE_COMMON_FILES_FILEUTIL_H_
 #define _CLAIRE_COMMON_FILES_FILEUTIL_H_
 
-#include <claire/common/strings/StringPiece.h>
-#include <claire/common/logging/Logging.h>
+#include <stdio.h>
+#include <sys/file.h>
+#include <sys/types.h>
 
 #include <string>
 #include <vector>
 
 #include <boost/noncopyable.hpp>
 
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/file.h>
+#include <claire/common/strings/StringPiece.h>
+#include <claire/common/logging/Logging.h>
 
 namespace claire {
 namespace FileUtil {
@@ -36,21 +36,14 @@ public:
     SequentialFile(const std::string& fname)
         : filename_(fname),
           fp_(::fopen(fname.c_str(), "r"))
-    {
-        assert(fp_);
-    }
+    {}
 
     SequentialFile(const std::string& fname, FILE* f)
         : filename_(fname),
           fp_(f)
-    {
-        assert(fp_);
-    }
+    {}
 
-    ~SequentialFile()
-    {
-        ::fclose(fp_);
-    }
+    ~SequentialFile() { ::fclose(fp_); }
 
     // Read up to "n" bytes from the file.  "scratch[0..n-1]" may be
     // written by this routine.  Sets "*result" to the data that was
@@ -60,7 +53,7 @@ public:
     // If an error was encountered, returns a non-OK status.
     //
     // REQUIRES: External synchronization
-    Status Read(char* scratch, size_t n, StringPiece* result = NULL);
+    Status Read(size_t n, StringPiece* result, char* scratch);
 
     // Skip "n" bytes from the file. This is guaranteed to be no
     // slower that reading the same data, but may be faster.
@@ -84,21 +77,14 @@ public:
     RandomAccessFile(const std::string& fname)
         : filename_(fname),
           fd_(::open(fname.c_str(), O_RDONLY))
-    {
-        assert(fd_ >= 0);
-    }
+    {}
 
     RandomAccessFile(const std::string& fname, int fd)
         : filename_(fname),
           fd_(fd)
-    {
-        assert(fd_ >= 0);
-    }
+    {}
 
-    ~RandomAccessFile()
-    {
-       ::close(fd_);
-    }
+    ~RandomAccessFile() { ::close(fd_); }
 
     // Read up to "n" bytes from the file starting at "offset".
     // "scratch[0..n-1]" may be written by this routine.  Sets "*result"
@@ -109,7 +95,7 @@ public:
     // status.
     //
     // Safe for concurrent use by multiple threads.
-    Status Read(char* scratch, uint64_t offset, size_t n, StringPiece* result = NULL) const;
+    Status Read(uint64_t offset, size_t n, StringPiece* result, char* scratch) const;
 
 private:
     std::string filename_;
@@ -125,54 +111,34 @@ public:
     WritableFile(const std::string& fname)
         : filename_(fname),
           fp_(::fopen(fname.c_str(), "w+e")),
-          writtenBytes_(0)
+          written_bytes_(0)
     {
-        assert(fp_);
         ::setbuffer(fp_, buffer_, sizeof buffer_);
     }
 
     WritableFile(const std::string&fname, FILE* fp)
         : filename_(fname),
           fp_(fp),
-          writtenBytes_(0)
+          written_bytes_(0)
     {
         ::setbuffer(fp_, buffer_, sizeof buffer_);
     }
 
-    virtual ~WritableFile()
-    {
-        ::fclose(fp_);
-    }
+    virtual ~WritableFile() { ::fclose(fp_); }
 
-    Status Append(const StringPiece& msg)
-    {
-        return Append(msg.data(), msg.size());
-    }
-
-    Status Append(const char *msg, size_t len);
+    Status Append(const StringPiece& data);
     Status Close();
     Status Flush();
 
-    size_t WrittenBytes() const
-    {
-        return writtenBytes_;
-    }
-
-    const std::string filename() const
-    {
-        return filename_;
-    }
-
-    int fd() const
-    {
-        return ::fileno(fp_);
-    }
+    size_t WrittenBytes() const { return written_bytes_; }
+    const std::string filename() const { return filename_; }
+    int fd() const { return ::fileno(fp_); }
 
 private:
     std::string filename_;
     FILE* fp_;
     char buffer_[64*1024];
-    size_t writtenBytes_;
+    size_t written_bytes_;
 };
 
 // A file abstraction for sequential writing at end of existing file.
@@ -181,31 +147,22 @@ class AppendableFile: public WritableFile
 public:
     AppendableFile(const std::string& fname)
         : WritableFile(fname, fopen(fname.c_str(), "ae"))
-    {
-    }
+    {}
 
     AppendableFile(const std::string& fname, FILE* fp)
         : WritableFile(fname, fp)
-    {
-    }
+    {}
 
     virtual ~AppendableFile()
-    {
-    }
-
+    {}
 };
 
 // Identifies a locked file.
 class FileLock : boost::noncopyable
 {
 public:
-    FileLock()
-    {
-    }
-
-    virtual ~FileLock()
-    {
-    }
+    FileLock() {}
+    virtual ~FileLock() {}
 
     int fd_;
 };
@@ -299,10 +256,10 @@ Status ReadFileToString(const std::string& fname, std::string* data);
 Status SymLink(const std::string& oldname, const std::string& newname);
 
 // A utility routine: determin filename is symbolic link or not
-bool isSymLink(const std::string& filename);
+bool IsSymLink(const std::string& fname);
 
 // A utility routine: read real name of symbolic link point to
-Status ReadLink(const std::string& filename, std::string* data);
+Status ReadLink(const std::string& fname, std::string* data);
 
 } // namespace FileUtil
 } // namespace claire

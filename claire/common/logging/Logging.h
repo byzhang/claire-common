@@ -1,3 +1,7 @@
+// Copyright (c) 2013 The claire-common Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file. See the AUTHORS file for names of contributors.
+
 // Copyright (c) 1999, Google Inc.
 // All rights reserved.
 //
@@ -176,7 +180,7 @@ namespace claire {
 // true iff the pointer is NULL.
 struct CheckOpString
 {
-    CheckOpString(std::string* str) : str_(str) { }
+    CheckOpString(std::string* str) : str_(str) {}
     // No destructor: if str_ is non-NULL, we're about to LOG(FATAL),
     // so there's no point in cleaning up str_.
     operator bool() const { return UNLIKELY(str_ != NULL); }
@@ -224,7 +228,7 @@ template <typename T1, typename T2>
 std::string* MakeCheckOpString(const T1& v1, const T2& v2, const char* exprtext) __attribute__ ((noinline));
 
 // A helper class for formatting "expr (V1 vs. V2)" in a CHECK_XX
-// statement.  See MakeCheckOpString for sample usage. 
+// statement.  See MakeCheckOpString for sample usage.
 class CheckOpMessageBuilder
 {
 public:
@@ -293,7 +297,7 @@ DEFINE_CHECK_OP_IMPL(Check_GT, > )
 
 #define CHECK_OP_LOG(name, op, val1, val2, log)                  \
     while (auto _result =                                        \
-         claire::detail::Check##name##Impl(                      \
+         Check##name##Impl(                                      \
              claire::detail::GetReferenceableValue(val1),        \
              claire::detail::GetReferenceableValue(val2),        \
              #val1 " " #op " " #val2))                           \
@@ -303,7 +307,7 @@ DEFINE_CHECK_OP_IMPL(Check_GT, > )
 // the while condition is unlikely.
 #define CHECK_OP_LOG(name, op, val1, val2, log)                  \
   while (claire::CheckOpString _result =                         \
-         claire::detail::Check##name##Impl(                      \
+         Check##name##Impl(                                      \
              claire::detail::GetReferenceableValue(val1),        \
              claire::detail::GetReferenceableValue(val2),        \
              #val1 " " #op " " #val2))                           \
@@ -555,7 +559,8 @@ DECLARE_CHECK_STROP_IMPL(strcasecmp, false)
     while (false) CHECK_STRCASENE(str1, str2)
 
 #define DCHECK_ERR(invocation) \
-    while (false) CHECK_ERR(invocation)
+    auto ret = (invocation); \
+    while (false) CHECK_ERR(ret)
 
 #endif  // NDEBUG
 

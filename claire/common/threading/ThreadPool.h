@@ -1,4 +1,4 @@
-// Copyright (c) 2013 The Claire Authors. All rights reserved.
+// Copyright (c) 2013 The claire-common Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 
@@ -23,39 +23,31 @@ class ThreadPool : boost::noncopyable
 public:
     typedef boost::function<void()> Task;
 
-    explicit ThreadPool(const std::string& nameArg = std::string())
-        : mutex_(),
-          cond_(mutex_),
-          name_(nameArg),
-          running_(false)
-    { }
+    explicit ThreadPool(const std::string& name);
+    ~ThreadPool();
 
-    ~ThreadPool()
-    {
-        Stop();
-    }
+    // must called before Start
+    void set_max_queue_size(int max_size) { max_queue_size_ = max_size; }
 
     void Start(int num_threads);
     void Stop();
 
-    void Run(const Task& t);
-
-    std::string name() const
-    {
-        return name_;
-    }
+    void Run(const Task& task);
+    void Run(Task&& task);
 
 private:
+    bool IsFull() const;
     Task Take();
     void RunInThread();
 
     Mutex mutex_;
-    Condition cond_;
+    Condition not_empty_;
+    Condition not_full_;
 
     const std::string name_;
     boost::ptr_vector<Thread> threads_;
-
     std::deque<Task> queue_;
+    size_t max_queue_size_;
     boost::atomic<bool> running_;
 };
 

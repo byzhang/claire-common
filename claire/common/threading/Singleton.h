@@ -1,4 +1,4 @@
-// Copyright (c) 2013 The Claire Authors. All rights reserved.
+// Copyright (c) 2013 The claire-comomn Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 
@@ -16,10 +16,10 @@ template <typename T>
 class Singleton : boost::noncopyable
 {
 public:
-    static T& instance()
+    static T* instance()
     {
         pthread_once(&ponce_, &Singleton::Init);
-        return *value_;
+        return value_;
     }
 
 private:

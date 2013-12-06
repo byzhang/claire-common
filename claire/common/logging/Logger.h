@@ -1,4 +1,4 @@
-// Copyright (c) 2013 The Claire Authors. All rights reserved.
+// Copyright (c) 2013 The claire-common Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 
@@ -15,15 +15,14 @@
 #include <claire/common/threading/CountDownLatch.h>
 #include <claire/common/logging/LogBuffer.h>
 
-namespace claire
-{
+namespace claire {
 
-// A Logger is the interface used by logging modules to emit entries
-// to a log.  A typical implementation will dump formatted data to a
-// sequence of files.  We also provide interfaces that will forward
-// the data to another thread so that the invoker never blocks.
-// Implementations is thread-safe since the logging system
-// may write to them from multiple threads.
+/// A Logger is the interface used by logging modules to emit entries
+/// to a log.  A typical implementation will dump formatted data to a
+/// sequence of files.  We also provide interfaces that will forward
+/// the data to another thread so that the invoker never blocks.
+/// Implementations is thread-safe since the logging system
+/// may write to them from multiple threads.
 class Logger : boost::noncopyable
 {
 public:
@@ -41,7 +40,7 @@ public:
     // appropriate by the higher level logging facility.  For example,
     // textual log messages already contain timestamps, and the
     // file:linenumber header.
-    void Append(const char *msg, size_t len);
+    void Append(const char* data, size_t length);
 
     void Start()
     {
@@ -58,7 +57,7 @@ public:
         if (running_)
         {
             running_ = false;
-            cond_.Notify();
+            condition_.Notify();
             thread_.Join();
         }
     }
@@ -78,7 +77,7 @@ private:
 
     Thread thread_;
     Mutex mutex_;
-    Condition cond_;
+    Condition condition_;
     CountDownLatch latch_;
 
     BufferPtr current_buffer_;

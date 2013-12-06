@@ -10,13 +10,13 @@
 
 #include <claire/common/logging/LogFile.h>
 
-using namespace claire;
+namespace claire {
 
 Logger::Logger()
     : running_(false),
       thread_(boost::bind(&Logger::ThreadMain, this), "Logger"),
       mutex_(),
-      cond_(mutex_),
+      condition_(mutex_),
       latch_(1),
       current_buffer_(new Buffer),
       next_buffer_(new Buffer),
@@ -27,12 +27,12 @@ Logger::Logger()
     buffers_.reserve(16);
 }
 
-void Logger::Append(const char *msg, size_t len)
+void Logger::Append(const char* data, size_t length)
 {
     MutexLock lock(mutex_);
-    if (current_buffer_->avail() > len)
+    if (current_buffer_->avail() > length)
     {
-        current_buffer_->Append(msg, len);
+        current_buffer_->Append(data, length);
     }
     else
     {
@@ -46,8 +46,8 @@ void Logger::Append(const char *msg, size_t len)
             current_buffer_.reset(new Buffer);
         }
 
-        current_buffer_->Append(msg, len);
-        cond_.Notify();
+        current_buffer_->Append(data, length);
+        condition_.Notify();
     }
 }
 
@@ -77,7 +77,7 @@ void Logger::ThreadMain()
             MutexLock lock(mutex_);
             if (buffers_.empty())
             {
-                cond_.WaitForSeconds(FLAGS_logbufsecs);
+                condition_.WaitForSeconds(FLAGS_logbufsecs);
             }
             buffers_.push_back(current_buffer_.release());
             buffers_to_write.swap(buffers_);
@@ -136,3 +136,4 @@ void Logger::ThreadMain()
     output.Flush();
 }
 
+} // namespace claire

@@ -1,4 +1,4 @@
-// Copyright (c) 2013 The Claire Authors. All rights reserved.
+// Copyright (c) 2013 The claire-common Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 
@@ -21,24 +21,20 @@ class LogFile : boost::noncopyable
 {
 public:
     LogFile(bool thread_safe);
-    ~LogFile();
 
-    void Append(const char* msg, size_t len);
+    void Append(const char* data, size_t length);
     void Flush();
 
 private:
-    void AppendUnLocked(const char* msg, size_t len);
-    void DropFileMemory();
-
-    std::string GetLogFileName()  const;
     void RollFile();
+    void DropFileMemory();
+    std::string GetLogFileName()  const;
+    void AppendUnLocked(const char* data, size_t length);
 
-    const std::string basename_;
+    const std::string base_name_;
     int count_;
-
     boost::scoped_ptr<Mutex> mutex_;
     boost::scoped_ptr<FileUtil::WritableFile> file_;
-
     time_t last_period_;
     time_t last_roll_;
     time_t last_flush_;

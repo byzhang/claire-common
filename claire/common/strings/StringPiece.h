@@ -1,3 +1,7 @@
+// Copyright (c) 2013 The claire-common Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file. See the AUTHORS file for names of contributors.
+
 // Copyright 2001-2010 The RE2 Authors.  All Rights Reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
@@ -19,34 +23,33 @@
 #ifndef _CLAIRE_COMMON_STRINGS_STRINGPIECE_H_
 #define _CLAIRE_COMMON_STRINGS_STRINGPIECE_H_
 
-#include <string>
-#include <algorithm>
-
 #include <assert.h>
 #include <string.h>
 #include <stddef.h>
 
-namespace claire
-{
+#include <string>
+#include <algorithm>
+
+namespace claire {
 
 class StringPiece
 {
 public:
-    StringPiece() : ptr_(NULL), length_(0) { }
+    StringPiece() : ptr_(NULL), length_(0) {}
 
     StringPiece(const char* str)
-        : ptr_(str), length_(str == NULL ? 0 : strlen(str)) { }
+        : ptr_(str), length_(str == NULL ? 0 : strlen(str)) {}
 
     StringPiece(const std::string& str)
-        : ptr_(str.data()), length_(str.size()) { }
+        : ptr_(str.data()), length_(str.size()) {}
 
     StringPiece(const char* offset, size_t len)
-        : ptr_(offset), length_(len) { }
+        : ptr_(offset), length_(len) {}
 
     StringPiece(const char* left, const char* right)
         : ptr_(left), length_(right - left)
     {
-        assert((right - left) > 0);
+        assert((right - left) >= 0);
     }
 
     // data() may return a pointer to a buffer with embedded NULs, and the
@@ -80,7 +83,6 @@ public:
     }
 
     char operator[](size_t n) const { return ptr_[n]; }
-
 
     bool starts_with(const StringPiece& x) const
     {
@@ -125,11 +127,10 @@ public:
         return r;
     }
 
-    std::string toString() const
+    std::string ToString() const
     {
         return std::string(data(), size());
     }
-
 
     void CopyToString(std::string* target) const
     {
@@ -197,6 +198,31 @@ public:
     StringPiece substr(size_type pos, size_type n = npos) const;
 
     static bool _equal(const StringPiece&, const StringPiece&);
+
+    void advance(size_t offset)
+    {
+        assert(offset < length_);
+        ptr_ += offset;
+        return ;
+    }
+
+    void assign(const char* start, const char* end__)
+    {
+        ptr_ = start;
+        length_ = end__ - start;
+    }
+
+    void reset(const std::string& str)
+    {
+        reset(str.data(), str.length());
+    }
+
+    void reset(const char* start, size_t len)
+    {
+        ptr_ = start;
+        length_ = len;
+    }
+
 private:
     const char* ptr_;
     size_t length_;

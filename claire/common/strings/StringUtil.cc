@@ -1,4 +1,4 @@
-// Copyright (c) 2013 The Claire Authors. All rights reserved.
+// Copyright (c) 2013 The claire-common Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 
@@ -23,10 +23,10 @@ static_assert(sizeof(digitsHex) == 17, "digitsHex size not equal 17");
 
 // Efficient Integer to String Conversions, by Matthew Wilson.
 template<typename T>
-size_t IntToBuffer(char buf[], T value)
+size_t IntToBuffer(char buffer[], T value)
 {
     T i = value;
-    char* p = buf;
+    char* p = buffer;
 
     do
     {
@@ -41,15 +41,15 @@ size_t IntToBuffer(char buf[], T value)
     }
 
     *p = '\0';
-    std::reverse(buf, p);
+    std::reverse(buffer, p);
 
-    return p - buf;
+    return p - buffer;
 }
 
-size_t HexToBuffer(char buf[], uintptr_t value)
+size_t HexToBuffer(char buffer[], uintptr_t value)
 {
     uintptr_t i = value;
-    char* p = buf;
+    char* p = buffer;
 
     do
     {
@@ -59,57 +59,57 @@ size_t HexToBuffer(char buf[], uintptr_t value)
     } while (i != 0);
 
     *p = '\0';
-    std::reverse(buf, p);
+    std::reverse(buffer, p);
 
-    return p - buf;
+    return p - buffer;
 }
 
-template size_t IntToBuffer(char buf[], char);
-template size_t IntToBuffer(char buf[], short);
-template size_t IntToBuffer(char buf[], unsigned short);
-template size_t IntToBuffer(char buf[], int);
-template size_t IntToBuffer(char buf[], unsigned int);
-template size_t IntToBuffer(char buf[], long);
-template size_t IntToBuffer(char buf[], unsigned long);
-template size_t IntToBuffer(char buf[], long long);
-template size_t IntToBuffer(char buf[], unsigned long long);
+template size_t IntToBuffer(char [], char);
+template size_t IntToBuffer(char [], short);
+template size_t IntToBuffer(char [], unsigned short);
+template size_t IntToBuffer(char [], int);
+template size_t IntToBuffer(char [], unsigned int);
+template size_t IntToBuffer(char [], long);
+template size_t IntToBuffer(char [], unsigned long);
+template size_t IntToBuffer(char [], long long);
+template size_t IntToBuffer(char [], unsigned long long);
 
-size_t HexString(char buff[], size_t bufflen,
-                 const char *str, size_t strlen)
+size_t HexString(char buffer[], size_t buffer_length,
+                 const char* data, size_t data_length)
 {
-    size_t currlen = 0;
-    for (size_t i = 0;i < strlen; i++)
+    size_t current_length = 0;
+    for (size_t i = 0;i < data_length; i++)
     {
-        int len = 0;
+        int ret = 0;
         if (i % 16 == 0)
         {
-            len = snprintf(buff + currlen, bufflen - currlen, "\n0x%04x:", static_cast<unsigned int>(i));
-            if (len < 0 || len > static_cast<int>(bufflen - currlen))
+            ret = snprintf(buffer + current_length, buffer_length - current_length, "\n0x%04x:", static_cast<unsigned int>(i));
+            if (ret < 0 || ret > static_cast<int>(buffer_length - current_length))
             {
                 break;
             }
-            currlen += len;
+            current_length += ret;
         }
 
         if (i % 2 == 0)
         {
-            len = snprintf(buff + currlen, bufflen - currlen, " ");
-            if (len < 0 || len > static_cast<int>(bufflen - currlen))
+            ret = snprintf(buffer + current_length, buffer_length - current_length, " ");
+            if (ret < 0 || ret > static_cast<int>(buffer_length - current_length))
             {
                 break;
             }
-            currlen += len;
+            current_length += ret;
         }
 
-        len = snprintf(buff + currlen,  bufflen - currlen, "%02x", static_cast<uint8_t>(str[i]));
-        if (len < 0 || len > static_cast<int>(bufflen - currlen))
+        ret = snprintf(buffer + current_length,  buffer_length - current_length, "%02x", static_cast<uint8_t>(data[i]));
+        if (ret < 0 || ret > static_cast<int>(buffer_length - current_length))
         {
             break;
         }
-        currlen += len;
+        current_length += ret;
     }
 
-    return currlen;
+    return current_length;
 }
 
 } // namespace claire

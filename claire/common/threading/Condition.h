@@ -1,4 +1,4 @@
-// Copyright (c) 2013 The Claire Authors. All rights reserved.
+// Copyright (c) 2013 The claire-common Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 
@@ -20,20 +20,18 @@ public:
     explicit Condition(Mutex& mutex)
         : mutex_(mutex)
     {
-        auto ret = pthread_cond_init(&cond_, NULL);
-        CHECK_ERR(ret) << "pthread_cond_init failed";
+        DCHECK_ERR(pthread_cond_init(&pcond_, NULL));
     }
 
     ~Condition()
     {
-        auto ret = pthread_cond_destroy(&cond_);
-        DCHECK_ERR(ret) << "pthread_cond_destroy failed";
+        DCHECK_ERR(pthread_cond_destroy(&pcond_));
     }
 
     void Wait()
     {
-        auto ret = pthread_cond_wait(&cond_, &(mutex_.mutex_));
-        DCHECK_ERR(ret) << "pthread_cond_wait failed";
+        Mutex::UnAssignGuard ug(mutex_);
+        DCHECK_ERR(pthread_cond_wait(&pcond_, &(mutex_.mutex_)));
     }
 
     // return true if timeout, otherwise return false
@@ -42,26 +40,23 @@ public:
         struct timespec abstime;
         ::clock_gettime(CLOCK_REALTIME, &abstime);
         abstime.tv_sec += seconds;
-
-        Mutex::UnAssignGuard ng(mutex_);
-        return ETIMEDOUT == pthread_cond_timedwait(&cond_, &(mutex_.mutex_), &abstime);
+        Mutex::UnAssignGuard ug(mutex_);
+        return ETIMEDOUT == pthread_cond_timedwait(&pcond_, &(mutex_.mutex_), &abstime);
     }
 
     void Notify()
     {
-        auto ret = pthread_cond_signal(&cond_);
-        DCHECK_ERR(ret) << "pthread_cond_signal failed";
+        DCHECK_ERR(pthread_cond_signal(&pcond_));
     }
 
     void NotifyAll()
     {
-        auto ret = pthread_cond_broadcast(&cond_);
-        DCHECK_ERR(ret) << "pthread_cond_broadcast failed";
+        DCHECK_ERR(pthread_cond_broadcast(&pcond_));
     }
 
 private:
     Mutex& mutex_;
-    pthread_cond_t cond_;
+    pthread_cond_t pcond_;
 };
 
 } // namespace claire

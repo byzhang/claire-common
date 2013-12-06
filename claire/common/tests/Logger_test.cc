@@ -28,7 +28,7 @@ void bench()
         }
         auto end = claire::Timestamp::Now();
 
-        printf("tid: %d, %f\n", claire::ThisThread::tid(), static_cast<double>(claire::timeDifference(end, start)) / 1000) ;
+        printf("tid: %d, %f\n", claire::ThisThread::tid(), static_cast<double>(claire::TimeDifference(end, start)) / 1000) ;
         struct timespec ts = {0, 500 * 1000 * 1000};
         nanosleep(&ts, NULL);
     }
@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
     claire::InitClaireLogging(argv[0]);
 
     sleep(30);
-    claire::ThreadPool pool;
+    claire::ThreadPool pool("logger_test");
     pool.Start(5);
     pool.Run(bench);
     pool.Run(bench);

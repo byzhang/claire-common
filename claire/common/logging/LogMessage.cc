@@ -1,3 +1,7 @@
+// Copyright (c) 2013 The claire-common Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file. See the AUTHORS file for names of contributors.
+
 // Copyright (c) 1999, Google Inc.
 // All rights reserved.
 //
@@ -35,6 +39,7 @@
 #include <claire/common/logging/Logging.h> // for CheckOpString
 #include <claire/common/threading/ThisThread.h>
 
+namespace claire {
 namespace {
 
 enum class LogColor : char
@@ -45,26 +50,26 @@ enum class LogColor : char
     COLOR_YELLOW
 };
 
-LogColor SeverityToColor(claire::LogSeverity severity)
+LogColor SeverityToColor(LogSeverity severity)
 {
     LogColor color = LogColor::COLOR_DEFAULT;
     switch (severity)
     {
-    case claire::LogSeverity::TRACE:
-    case claire::LogSeverity::DEBUG:
-    case claire::LogSeverity::INFO:
-        color = LogColor::COLOR_DEFAULT;
-        break;
-    case claire::LogSeverity::WARNING:
-        color = LogColor::COLOR_YELLOW;
-        break;
-    case claire::LogSeverity::ERROR:
-    case claire::LogSeverity::FATAL:
-        color = LogColor::COLOR_RED;
-        break;
-    default:
-        // should never get here.
-        assert(false);
+        case LogSeverity::TRACE:
+        case LogSeverity::DEBUG:
+        case LogSeverity::INFO:
+            color = LogColor::COLOR_DEFAULT;
+            break;
+        case LogSeverity::WARNING:
+            color = LogColor::COLOR_YELLOW;
+            break;
+        case LogSeverity::ERROR:
+        case LogSeverity::FATAL:
+            color = LogColor::COLOR_RED;
+            break;
+        default:
+            // should never get here.
+            assert(false);
     }
     return color;
 }
@@ -92,15 +97,15 @@ const char* GetAnsiColorCode(LogColor color)
 {
     switch (color)
     {
-    case LogColor::COLOR_RED:     return "1";
-    case LogColor::COLOR_GREEN:   return "2";
-    case LogColor::COLOR_YELLOW:  return "3";
-    case LogColor::COLOR_DEFAULT: return "";
+        case LogColor::COLOR_RED:     return "1";
+        case LogColor::COLOR_GREEN:   return "2";
+        case LogColor::COLOR_YELLOW:  return "3";
+        case LogColor::COLOR_DEFAULT: return "";
     };
     return NULL; // stop warning about return type.
 }
 
-void ColoredWriteToStderr(claire::LogSeverity severity,
+void ColoredWriteToStderr(LogSeverity severity,
                           const char* message, size_t len)
 {
     const auto color = (TerminalSupportsColor() && FLAGS_colorlogtostderr) ?
@@ -121,12 +126,7 @@ void ColoredWriteToStderr(claire::LogSeverity severity,
 
 __thread char t_time[32];
 __thread time_t t_last_second;
-__thread char t_errnobuf[512];
-
-const char * strerror_tl(int saved_errno)
-{
-    return ::strerror_r(saved_errno, t_errnobuf, sizeof t_errnobuf);
-}
+__thread char t_errno_buffer[512];
 
 void DefaultOutput(const char* msg, size_t len)
 {
@@ -139,10 +139,7 @@ void DefaultFlush()
     ::fflush(stdout);
 }
 
-} // namespace anony
-
-namespace claire
-{
+} // namespace
 
 const char* LogSeverityName[] =
 {
@@ -153,6 +150,11 @@ const char* LogSeverityName[] =
     "ERROR ",
     "FATAL ",
 };
+
+const char * strerror_tl(int saved_errno)
+{
+    return ::strerror_r(saved_errno, t_errno_buffer, sizeof t_errno_buffer);
+}
 
 inline LogStream& operator<<(LogStream& s, const LogMessage::SourceFile& v)
 {
@@ -172,7 +174,7 @@ LogMessage::Impl::Impl(const SourceFile& file,
 {
     FormatTime();
     ThisThread::tid();
-    stream_ << StringPiece(ThisThread::TidString(), 6);
+    stream_ << StringPiece(ThisThread::tid_string(), 6);
     stream_ << StringPiece(LogSeverityName[static_cast<int>(severity)], 5);
     stream_ << "- " << file << ':' << line << " : ";
 }
@@ -205,7 +207,7 @@ void LogMessage::Impl::Finish()
 {
     stream_ << '\n';
 }
- 
+
 LogMessage::LogMessage(SourceFile file,
                        int line,
                        LogSeverity severity,
@@ -222,12 +224,10 @@ LogMessage::LogMessage(SourceFile file, int line, LogSeverity severity, const ch
 }
 
 LogMessage::LogMessage(SourceFile file, int line)
-    : impl_(file, line, LogSeverity::INFO)
-{ }
+    : impl_(file, line, LogSeverity::INFO) {}
 
 LogMessage::LogMessage(SourceFile file, int line, LogSeverity severity)
-    : impl_(file, line, severity)
-{ }
+    : impl_(file, line, severity) {}
 
 LogMessage::LogMessage(SourceFile file, int line, const CheckOpString& result)
     : impl_(file, line, LogSeverity::FATAL)
@@ -247,6 +247,11 @@ LogMessage::~LogMessage()
     }
 
     g_output(buf.data(), buf.length());
+
+    if (impl_.severity_ == LogSeverity::FATAL)
+    {
+        abort();
+    }
 }
 
 void LogMessage::SetOutput(OutputFunc out)

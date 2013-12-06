@@ -1,4 +1,4 @@
-// Copyright (c) 2013 The Claire Authors. All rights reserved.
+// Copyright (c) 2013 The claire-common Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 
@@ -108,11 +108,10 @@ inline To down_cast(From* f)
     return static_cast<To>(f);
 }
 
-// use like this: down_pointer_cast<T>(foo);
-// so we only accept smart pointers
-template<typename To, typename From>
-inline boost::shared_ptr<To> down_pointer_cast(const boost::shared_ptr<From>& f)
+template<typename To, typename From>     // use like this: down_pointer_cast<T>(foo);
+inline ::boost::shared_ptr<To> down_pointer_cast(const ::boost::shared_ptr<From>& f)
 {
+    // so we only accept smart pointers
     // Ensures that To is a sub-type of From *.  This test is here only
     // for compile-time type checking, and has no overhead in an
     // optimized build at run-time, as it will be optimized away
@@ -125,7 +124,7 @@ inline boost::shared_ptr<To> down_pointer_cast(const boost::shared_ptr<From>& f)
 #if !defined(NDEBUG)
     assert(f == NULL || dynamic_cast<To*>(get_pointer(f)) != NULL);  // RTTI: debug mode only!
 #endif
-    return boost::static_pointer_cast<To>(f);
+    return ::boost::static_pointer_cast<To>(f);
 }
 
 } // namespace claire

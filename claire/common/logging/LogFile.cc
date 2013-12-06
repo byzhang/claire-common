@@ -1,4 +1,4 @@
-// Copyright (c) 2013 The Claire Authors. All rights reserved.
+// Copyright (c) 2013 The claire-common Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 
@@ -13,43 +13,40 @@
 #include <claire/common/files/FileUtil.h>
 #include <claire/common/time/Timestamp.h>
 #include <claire/common/threading/Mutex.h>
-#include <claire/common/system/ProcessInfo.h>
+#include <claire/common/system/ThisProcess.h>
 
 DEFINE_bool(drop_log_memory, true, "Drop in-memory buffers of log contents. "
             "Logs can grow very quickly and they are rarely read before they "
             "need to be evicted from memory. Instead, drop them from memory "
             "as soon as they are flushed to disk.");
 
-using namespace claire;
+namespace claire {
 
 const static int kCheckTimeRoll = 1024;
 const static int kSecondsPerDay = 60*60*24;
 
 LogFile::LogFile(bool thread_safe)
-    : basename_(::google::ProgramInvocationShortName()),
+    : base_name_(::google::ProgramInvocationShortName()),
       count_(0),
       mutex_(thread_safe ? new Mutex : NULL),
       last_period_(0),
       last_roll_(0),
       last_flush_(0)
 {
-    assert(basename_.find('/') == std::string::npos);
+    assert(base_name_.find('/') == std::string::npos);
     RollFile();
 }
 
-LogFile::~LogFile()
-{ }
-
-void LogFile::Append(const char* msg, size_t len)
+void LogFile::Append(const char* data, size_t length)
 {
     if(mutex_)
     {
         MutexLock lock(*mutex_);
-        AppendUnLocked(msg, len);
+        AppendUnLocked(data, length);
     }
     else
     {
-        AppendUnLocked(msg, len);
+        AppendUnLocked(data, length);
     }
 }
 
@@ -60,7 +57,6 @@ void LogFile::Flush()
         MutexLock lock(*mutex_);
         file_->Flush();
         DropFileMemory();
-
     }
     else
     {
@@ -69,10 +65,9 @@ void LogFile::Flush()
     }
 }
 
-void LogFile::AppendUnLocked(const char* msg, size_t len)
+void LogFile::AppendUnLocked(const char* data, size_t length)
 {
-    file_->Append(msg, len);
-
+    file_->Append(StringPiece(data, length));
     if (file_->WrittenBytes() > static_cast<uint32_t>(FLAGS_max_log_size)*1024*1024)
     {
         RollFile();
@@ -104,7 +99,7 @@ void LogFile::AppendUnLocked(const char* msg, size_t len)
 void LogFile::RollFile()
 {
     auto now = Timestamp::Now().SecondsSinceEpoch();
-    auto filename = GetLogFileName();
+    auto name = GetLogFileName();
     auto start = now / kSecondsPerDay * kSecondsPerDay;
 
     if (now > last_roll_)
@@ -113,32 +108,32 @@ void LogFile::RollFile()
         last_flush_ = now;
         last_period_ = start;
 
-        file_.reset(new FileUtil::AppendableFile(filename));
+        file_.reset(new FileUtil::AppendableFile(name));
 
-        std::string linkpath;
-        auto slash = ::strrchr(filename.c_str(), '/');
+        std::string link_path;
+        auto slash = ::strrchr(name.c_str(), '/');
         if (slash)
         {
-            linkpath = std::string(filename, slash-filename.c_str()+1);
+            link_path = std::string(name, slash-name.c_str()+1);
         }
-        linkpath += basename_ + ".log";
+        link_path += base_name_ + ".log";
 
-        if (FileUtil::FileExists(linkpath))
+        if (FileUtil::FileExists(link_path))
         {
-            std::string name;
-            uint64_t len;
-            if ((FileUtil::ReadLink(linkpath, &name) == FileUtil::kOk)
-                && (FileUtil::GetFileSize(name, &len) == FileUtil::kOk)
-                && (len == 0))
+            std::string fname;
+            uint64_t length;
+            if ((FileUtil::ReadLink(link_path, &fname) == FileUtil::kOk)
+                && (FileUtil::GetFileSize(fname, &length) == FileUtil::kOk)
+                && (length == 0))
             {
-                FileUtil::DeleteFile(name);
+                FileUtil::DeleteFile(fname);
             }
 
-            FileUtil::DeleteFile(linkpath);
+            FileUtil::DeleteFile(link_path);
         }
 
-        auto linkdest = slash ? (slash+1) : filename;
-        FileUtil::SymLink(linkdest, linkpath);
+        auto dst = slash ? (slash+1) : name;
+        FileUtil::SymLink(dst, link_path);
     }
 }
 
@@ -155,23 +150,23 @@ void LogFile::DropFileMemory()
 
 std::string LogFile::GetLogFileName() const
 {
-    auto filename = FLAGS_log_dir;
-
-    if (!filename.empty() && *filename.rbegin() != '/')
+    auto fname = FLAGS_log_dir;
+    if (!fname.empty() && *fname.rbegin() != '/')
     {
-        filename += "/";
+        fname += "/";
     }
 
-    filename += basename_;
-    filename += ".";
-    filename += Timestamp::Now().ToFormattedString();
-    filename += ".";
-    filename += ProcessInfo::hostname();
-    filename += ".";
-    filename += ProcessInfo::GetPidString();
-    filename += ".";
-    filename += ProcessInfo::username();
-    filename += ".log";
-
-    return filename;
+    fname += base_name_;
+    fname += ".";
+    fname += Timestamp::Now().ToFormattedString();
+    fname += ".";
+    fname += ThisProcess::Host();
+    fname += ".";
+    fname += ThisProcess::pid_string();
+    fname += ".";
+    fname += ThisProcess::User();
+    fname += ".log";
+    return fname;
 }
+
+} // namespace claire

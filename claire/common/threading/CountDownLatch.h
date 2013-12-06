@@ -1,4 +1,4 @@
-// Copyright (c) 2013 The Claire Authors. All rights reserved.
+// Copyright (c) 2013 The claire-common Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 
@@ -10,27 +10,23 @@
 #include <claire/common/threading/Mutex.h>
 #include <claire/common/threading/Condition.h>
 
-
 namespace claire {
 
 class CountDownLatch : boost::noncopyable
 {
 public:
-    CountDownLatch(int count)
+    explicit CountDownLatch(int c)
         : mutex_(),
-          cond_(mutex_),
-          count_(count)
-    { }
-
-    ~CountDownLatch()
-    { }
+          condition_(mutex_),
+          count_(c)
+    {}
 
     void Wait()
     {
         MutexLock lock(mutex_);
         while (count_ > 0)
         {
-            cond_.Wait();
+            condition_.Wait();
         }
     }
 
@@ -40,11 +36,11 @@ public:
         --count_;
         if (count_ == 0)
         {
-            cond_.NotifyAll();
+            condition_.NotifyAll();
         }
     }
 
-    int get_count() const
+    int count() const
     {
         MutexLock lock(mutex_);
         return count_;
@@ -52,7 +48,7 @@ public:
 
 private:
     mutable Mutex mutex_;
-    Condition cond_;
+    Condition condition_;
     int count_;
 };
 
