@@ -28,15 +28,15 @@
 
 namespace claire {
 
-TimeoutQueue::Id TimeoutQueue::Add(int64_t now, int64_t delay, const Callback& callback)
+TimeoutQueue::Id TimeoutQueue::Add(int64_t expiration, const Callback& callback)
 {
-    timeouts_.insert({next_, now + delay, -1, callback});
+    timeouts_.insert({next_, expiration, -1, callback});
     return next_++;
 }
 
-TimeoutQueue::Id TimeoutQueue::Add(int64_t now, int64_t delay, Callback&& callback)
+TimeoutQueue::Id TimeoutQueue::Add(int64_t expiration, Callback&& callback)
 {
-    timeouts_.insert({next_, now + delay, -1, std::move(callback)});
+    timeouts_.insert({next_, expiration, -1, std::move(callback)});
     return next_++;
 }
 

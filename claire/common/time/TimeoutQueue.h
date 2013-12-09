@@ -53,12 +53,11 @@ public:
     TimeoutQueue() : next_(1) {}
 
     ///
-    /// Add a one-time timeout event that will fire "delay" time units from "now"
-    /// (that is, the first time that Run() is called with a time value >= now
-    /// + delay).
+    /// Add a one-time timeout event that will fire "expire" time
+    /// (that is, the first time that Run() is called with a time value >= expiration)
     ///
-    Id Add(int64_t now, int64_t delay, const Callback& callback);
-    Id Add(int64_t now, int64_t delay, Callback&& callback);
+    Id Add(int64_t expiration, const Callback& callback);
+    Id Add(int64_t expiration, Callback&& callback);
 
     ///
     /// Add a repeating timeout event that will fire every "interval" time units

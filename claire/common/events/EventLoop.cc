@@ -234,14 +234,12 @@ void EventLoop::Post(Task&& task)
 TimerId EventLoop::RunAt(const Timestamp& time, const TimeoutCallback& callback)
 {
     AssertInLoopThread();
-    auto now = Timestamp::Now().MicroSecondsSinceEpoch();
     bool reset = timeouts_->NextExpiration() > time.MicroSecondsSinceEpoch();
-    auto id = timeouts_->Add(now, time.MicroSecondsSinceEpoch(), callback);
+    auto id = timeouts_->Add(time.MicroSecondsSinceEpoch(), callback);
     if (reset)
     {
         ResetTimerfd(timer_fd_, time.MicroSecondsSinceEpoch());
     }
-    LOG(TRACE) << "EventLoop " << this << " RunAt return id " << id;
     return id;
 }
 
@@ -266,7 +264,6 @@ TimerId EventLoop::RunEvery(int interval_in_milliseconds, const TimeoutCallback&
 void EventLoop::Cancel(TimerId id)
 {
     AssertInLoopThread();
-    LOG(TRACE) << "EventLoop " << this << " Cancel " << id.get();
     timeouts_->Cancel(id.get());
 }
 
