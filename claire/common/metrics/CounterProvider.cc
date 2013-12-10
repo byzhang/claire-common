@@ -10,8 +10,6 @@
 
 #include <gflags/gflags.h>
 
-#include <unordered_map>
-
 #include <boost/scoped_array.hpp>
 
 #include <claire/common/threading/Mutex.h>
@@ -107,11 +105,27 @@ public:
         return value;
     }
 
+    std::unordered_map<std::string, int> GetSnapshot()
+    {
+        std::unordered_map<std::string, int> snapshot;
+        std::unordered_map<std::string, int> counters;
+        {
+            MutexLock lock(mutex_);
+            counters = counters_;
+        }
+
+        for (auto it = counters.begin(); it != counters.end(); ++it)
+        {
+            snapshot.insert(std::make_pair(it->first, GetCounterValue(it->second)));
+        }
+        return snapshot;
+    }
+
 private:
     int max_threads_;
     int max_counters_;
 
-    Mutex mutex_; // FIXME
+    mutable Mutex mutex_; // FIXME
     std::unordered_map<std::string, int> counters_;
     std::unordered_map<int, int> slots_; // FIXME
     boost::scoped_array<int> data_;
@@ -148,6 +162,11 @@ int CounterProvider::GetCounterValue(const std::string& name)
 CounterProvider* CounterProvider::instance()
 {
     return Singleton<CounterProvider>::instance();
+}
+
+std::unordered_map<std::string, int> CounterProvider::GetSnapshot()
+{
+    return impl_->GetSnapshot();
 }
 
 } // namespace claire

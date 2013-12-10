@@ -26,30 +26,36 @@
 
 #include <boost/bind.hpp>
 
+#include <claire/common/logging/Logging.h>
+
 namespace claire {
 
 TimeoutQueue::Id TimeoutQueue::Add(int64_t expiration, const Callback& callback)
 {
-    timeouts_.insert({next_, expiration, -1, callback});
-    return next_++;
+    auto id = next_++;
+    timeouts_.insert({id, expiration, -1, callback});
+    return id;
 }
 
 TimeoutQueue::Id TimeoutQueue::Add(int64_t expiration, Callback&& callback)
 {
-    timeouts_.insert({next_, expiration, -1, std::move(callback)});
-    return next_++;
+    auto id = next_++;
+    timeouts_.insert({id, expiration, -1, std::move(callback)});
+    return id;
 }
 
 TimeoutQueue::Id TimeoutQueue::AddRepeating(int64_t now, int64_t interval, const Callback& callback)
 {
-    timeouts_.insert({next_, now + interval, interval, callback});
-    return next_++;
+    auto id = next_++;
+    timeouts_.insert({id, now + interval, interval, callback});
+    return id;
 }
 
 TimeoutQueue::Id TimeoutQueue::AddRepeating(int64_t now, int64_t interval, Callback&& callback)
 {
-    timeouts_.insert({next_, now + interval, interval, std::move(callback)});
-    return next_++;
+    auto id = next_++;
+    timeouts_.insert({id, now + interval, interval, std::move(callback)});
+    return id;
 }
 
 bool TimeoutQueue::Cancel(Id id)
@@ -66,7 +72,6 @@ int64_t TimeoutQueue::NextExpiration() const
 int64_t TimeoutQueue::Run(int64_t now)
 {
     std::vector<Event> expired;
-
     auto& events = timeouts_.get<kByExpiration>();
     auto end = events.upper_bound(now);
     std::move(events.begin(), end, std::back_inserter(expired));

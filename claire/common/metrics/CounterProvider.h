@@ -10,6 +10,7 @@
 #define _CLAIRE_COMMON_METRICS_COUNTERPROVIDER_H_
 
 #include <string>
+#include <unordered_map>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/noncopyable.hpp>
@@ -44,6 +45,8 @@ public:
     // counter by name for the calling thread.  Will register
     // the thread if it is not already registered.
     static int* GetLocation(const std::string& name);
+
+    std::unordered_map<std::string, int> GetSnapshot();
 
 private:
     CounterProvider();

@@ -35,6 +35,7 @@ set(common_SRCS
     EscapeTables.cc
     metrics/Counter.cc
     metrics/CounterProvider.cc
+    metrics/CounterSampler.cc
     metrics/SampleVector.cc
     metrics/BucketRanges.cc
     metrics/HistogramSamples.cc
