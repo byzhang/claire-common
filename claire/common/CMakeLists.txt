@@ -45,7 +45,7 @@ set(common_SRCS
   )
 
 add_library(claire_common ${common_SRCS})
-target_link_libraries(claire_common pthread rt gflags tcmalloc protobuf)
+target_link_libraries(claire_common gflags protobuf pthread rt)
 
 install(TARGETS claire_common DESTINATION lib)
 file(GLOB LOGGING_HEADERS "logging/*.h")
