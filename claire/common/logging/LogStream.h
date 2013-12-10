@@ -1,4 +1,4 @@
-// Copyright (c) 2013 The Claire Authors. All rights reserved.
+// Copyright (c) 2013 The claire-common Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 
@@ -13,9 +13,9 @@
 
 namespace claire {
 
-enum class LogFormat : char  
+enum class LogFormat : char
 {
-    kNormal = 0, 
+    kNormal = 0,
     kHex = 1
 };
 
@@ -27,7 +27,7 @@ public:
 
     LogStream()
         : format_(LogFormat::kNormal)
-    { }
+    {}
 
     self& operator<<(bool v)
     {
