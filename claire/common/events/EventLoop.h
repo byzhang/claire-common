@@ -89,6 +89,8 @@ public:
     void AssertInLoopThread() const;
     bool IsInLoopThread() const;
 
+    static EventLoop* CurrentLoopInThisThread();
+
 private:
     void AbortNotInLoopThread() const;
     void Wakeup();

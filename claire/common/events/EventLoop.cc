@@ -344,4 +344,10 @@ void EventLoop::AssertInLoopThread() const
 {
     assert(IsInLoopThread());
 }
+
+EventLoop* EventLoop::CurrentLoopInThisThread()
+{
+    return tLoopInThisThread;
+}
+
 } // namespace claire
