@@ -23,3 +23,12 @@ It depends serveral library:
 After install all before, run ./build.sh and ./build.sh install.
 
 Done.
+
+
+  [1]: http://www.cmake.org/
+  [2]: http://www.boost.org/
+  [3]: https://code.google.com/p/gflags/
+  [4]: https://code.google.com/p/googletest/
+  [5]: http://stackoverflow.com/questions/13513905/how-to-properly-setup-googletest-on-linux
+  [6]: https://code.google.com/p/protobuf/
+  [7]: https://code.google.com/p/rapidjson/
