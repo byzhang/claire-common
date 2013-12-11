@@ -97,8 +97,8 @@ do { \
 // For folks that need real specific times, use this to select a precise range
 // of times you want plotted, and the number of buckets you want used.
 #define HISTOGRAM_CUSTOM_TIMES(name, sample, min, max, bucket_count) \
-    STATIC_HISTOGRAM_POINTER_BLOCK(name, AddTime(sample), \
-        claire::Histogram::FactoryTimeGet(name, min, max, bucket_count) \
+    STATIC_HISTOGRAM_POINTER_BLOCK(name, Add(sample), \
+        claire::Histogram::FactoryGet(name, min, max, bucket_count))
 
 #define HISTOGRAM_COUNTS(name, sample) \
     HISTOGRAM_CUSTOM_COUNTS(name, sample, 1, 1000000, 50)

@@ -29,12 +29,14 @@
 // @author Tudor Bosman (tudorb@fb.com)
 //
 
-#ifndef _CLAIRE_COMMON_TIME_TIMEOUTQUEUE_H_
-#define _CLAIRE_COMMON_TIME_TIMEOUTQUEUE_H_
+#ifndef _CLAIRE_COMMON_EVENTS_TIMEOUTQUEUE_H_
+#define _CLAIRE_COMMON_EVENTS_TIMEOUTQUEUE_H_
 
 #include <stdint.h>
 
+#include <boost/atomic.hpp>
 #include <boost/function.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
 #include <boost/multi_index/member.hpp>
@@ -44,13 +46,17 @@
 
 namespace claire {
 
+class EventLoop;
+class Channel;
+
 class TimeoutQueue : boost::noncopyable
 {
 public:
     typedef int64_t Id;
     typedef boost::function<void()> Callback;
 
-    TimeoutQueue() : next_(1) {}
+    TimeoutQueue(EventLoop* loop);
+    ~TimeoutQueue();
 
     ///
     /// Add a one-time timeout event that will fire "expire" time
@@ -68,29 +74,9 @@ public:
     Id AddRepeating(int64_t now, int64_t interval, Callback&& callback);
 
     ///
-    /// Erase a given timeout event, returns true if the event was actually
-    /// erased and false if it didn't exist in our queue.
+    /// Erase a given timeout event.
     ///
-    bool Cancel(Id id);
-
-    ///
-    /// Process all events that are due at times <= "now" by calling their
-    /// callbacks.
-    ///
-    /// Callbacks are allowed to call back into the queue and add / erase events;
-    /// they might create more events that are already due.  In this case,
-    /// Run will only go through the queue once, and return a "next
-    /// expiration" time in the past or present (<= now).
-    ///
-    /// Return the time that the next event will be due (same as
-    /// NextExpiration(), below)
-    ///
-    int64_t Run(int64_t now);
-
-    ///
-    /// Return the time that the next event will be due.
-    ///
-    int64_t NextExpiration() const;
+    void Cancel(Id id);
 
 private:
     struct Event
@@ -119,10 +105,37 @@ private:
         kByExpiration = 1
     };
 
+    //
+    // Process all events that are due at times <= "now" by calling their
+    // callbacks.
+    //
+    // Callbacks are allowed to call back into the queue and add / erase events;
+    // they might create more events that are already due.  In this case,
+    // Run will only go through the queue once, and return a "next
+    // expiration" time in the past or present (<= now).
+    //
+    // Return the time that the next event will be due (same as
+    // NextExpiration(), below)
+    //
+    int64_t Run(int64_t now);
+
+    //
+    // Return the time that the next event will be due.
+    //
+    int64_t NextExpiration() const;
+
+    void AddInLoop(Event& event);
+    void CancelInLoop(Id id);
+    void OnTimer();
+
+    EventLoop* loop_;
+    int timer_fd_;
+    boost::scoped_ptr<Channel> timer_channel_;
+
     Set timeouts_;
-    Id next_;
+    boost::atomic<Id> next_;
 };
 
 } // namespace claire
 
-#endif // _CLAIRE_COMMON_TIME_TIMEOUTQUEUE_H_
+#endif // _CLAIRE_COMMON_EVENTS_TIMEOUTQUEUE_H_

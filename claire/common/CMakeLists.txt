@@ -19,7 +19,6 @@ set(common_SRCS
     threading/ThreadPool.cc
     threading/ThisThread.cc
     time/Timestamp.cc
-    time/TimeoutQueue.cc
     files/FileUtil.cc
     system/ThisProcess.cc
     base/StackTrace.cc
@@ -29,6 +28,7 @@ set(common_SRCS
     events/Channel.cc
     events/EventLoopThread.cc
     events/EventLoopThreadPool.cc
+    events/TimeoutQueue.cc
     symbolizer/Elf.cc
     symbolizer/Dwarf.cc
     symbolizer/Symbolizer.cc

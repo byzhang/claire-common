@@ -110,9 +110,6 @@ private:
     int wakeup_fd_;
     boost::scoped_ptr<Channel> wakeup_channel_;
 
-    int timer_fd_;
-    boost::scoped_ptr<Channel> timer_channel_;
-
     ChannelList active_channels_;
     Channel* current_active_channel_;
 

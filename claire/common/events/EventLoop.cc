@@ -5,7 +5,6 @@
 #include <claire/common/events/EventLoop.h>
 
 #include <sys/eventfd.h>
-#include <sys/timerfd.h>
 
 #include <algorithm>
 
@@ -14,7 +13,7 @@
 #include <claire/common/events/Poller.h>
 #include <claire/common/events/Channel.h>
 #include <claire/common/events/poller/EPollPoller.h>
-#include <claire/common/time/TimeoutQueue.h>
+#include <claire/common/events/TimeoutQueue.h>
 #include <claire/common/logging/Logging.h>
 #include <claire/common/threading/ThisThread.h>
 
@@ -44,58 +43,6 @@ int CreateEventfd()
     return fd;
 }
 
-int CreateTimerfd()
-{
-    int fd = ::timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
-    if (fd < 0)
-    {
-        PLOG(FATAL) << "Failed in timerfd_create ";
-    }
-
-    return fd;
-}
-
-struct timespec HowMuchTimeFromNow(int64_t when, int64_t now)
-{
-    auto delta = when - now;
-    if (delta < 100)
-    {
-        delta = 100;
-    }
-
-    struct timespec ts;
-    ts.tv_sec = static_cast<time_t>(delta / 1000000);
-    ts.tv_nsec = static_cast<long>((delta % Timestamp::kMicroSecondsPerSecond) * 1000); // FIXME
-    return ts;
-}
-
-void ReadTimerfd(int fd)
-{
-    uint64_t howmany;
-    ssize_t n = ::read(fd, &howmany, sizeof howmany);
-    if (n != sizeof howmany)
-    {
-        PLOG(ERROR) << "ResetTimerfd reads " << n << " bytes instead of 8";
-    }
-}
-
-void ResetTimerfd(int fd, int64_t expiration)
-{
-    // wake up loop by timerfd_settime()
-    struct itimerspec spec_new;
-    struct itimerspec spec_old;
-    ::bzero(&spec_new, sizeof spec_new);
-    ::bzero(&spec_old, sizeof spec_old);
-
-    spec_new.it_value = HowMuchTimeFromNow(expiration,
-                                           Timestamp::Now().MicroSecondsSinceEpoch());
-    int ret = ::timerfd_settime(fd, 0, &spec_new, &spec_old);
-    if (ret)
-    {
-        PLOG(ERROR) << "timerfd_settime failed";
-    }
-}
-
 } // namespace
 
 EventLoop::EventLoop()
@@ -103,11 +50,9 @@ EventLoop::EventLoop()
       quit_(false),
       tid_(ThisThread::tid()),
       poller_(new EPollPoller(this)), // FIXME
-      timeouts_(new TimeoutQueue()), // since 2.6.28
+      timeouts_(new TimeoutQueue(this)), // since 2.6.28
       wakeup_fd_(CreateEventfd()),
       wakeup_channel_(new Channel(this, wakeup_fd_)),
-      timer_fd_(CreateTimerfd()),
-      timer_channel_(new Channel(this, timer_fd_)),
       current_active_channel_(NULL)
 {
     LOG(DEBUG) << "EventLoop create " << this << "in thread " << tid_;
@@ -124,18 +69,12 @@ EventLoop::EventLoop()
     wakeup_channel_->set_read_callback(
         boost::bind(&EventLoop::OnWakeup, this));
     wakeup_channel_->EnableReading();
-
-    timer_channel_->set_read_callback(
-        boost::bind(&EventLoop::OnTimer, this));
-    timer_channel_->EnableReading();
-    timer_channel_->set_priority(Channel::Priority::kHigh); // FIXME
 }
 
 EventLoop::~EventLoop()
 {
     LOG(DEBUG) << "EventLoop " << this << " of thread " << tid_
                << " destructs in thread " << ThisThread::tid();
-    ::close(timer_fd_);
     ::close(wakeup_fd_);
 
     DCHECK(tLoopInThisThread == this);
@@ -233,14 +172,7 @@ void EventLoop::Post(Task&& task)
 
 TimerId EventLoop::RunAt(const Timestamp& time, const TimeoutCallback& callback)
 {
-    AssertInLoopThread();
-    bool reset = timeouts_->NextExpiration() > time.MicroSecondsSinceEpoch();
-    auto id = timeouts_->Add(time.MicroSecondsSinceEpoch(), callback);
-    if (reset)
-    {
-        ResetTimerfd(timer_fd_, time.MicroSecondsSinceEpoch());
-    }
-    return id;
+    return timeouts_->Add(time.MicroSecondsSinceEpoch(), callback);
 }
 
 TimerId EventLoop::RunAfter(int delay_in_milliseconds, const TimeoutCallback& callback)
@@ -250,20 +182,12 @@ TimerId EventLoop::RunAfter(int delay_in_milliseconds, const TimeoutCallback& ca
 
 TimerId EventLoop::RunEvery(int interval_in_milliseconds, const TimeoutCallback& callback)
 {
-    AssertInLoopThread();
     auto now = Timestamp::Now().MicroSecondsSinceEpoch();
-    bool reset = timeouts_->NextExpiration() > (now +interval_in_milliseconds*1000);
-    auto id = timeouts_->AddRepeating(now, interval_in_milliseconds*1000, callback);
-    if (reset)
-    {
-        ResetTimerfd(timer_fd_, timeouts_->NextExpiration());
-    }
-    return id;
+    return timeouts_->AddRepeating(now, interval_in_milliseconds*1000, callback);
 }
 
 void EventLoop::Cancel(TimerId id)
 {
-    AssertInLoopThread();
     timeouts_->Cancel(id.get());
 }
 
@@ -313,12 +237,6 @@ void EventLoop::OnWakeup()
     {
         LOG(ERROR) << "EventLoop::OnWakeup reads " << n << " bytes instead of 8";
     }
-}
-
-void EventLoop::OnTimer()
-{
-    ReadTimerfd(timer_fd_);
-    ResetTimerfd(timer_fd_, timeouts_->Run(Timestamp::Now().MicroSecondsSinceEpoch()));
 }
 
 void EventLoop::RunPendingTasks()

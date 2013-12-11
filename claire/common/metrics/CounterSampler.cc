@@ -36,7 +36,7 @@ void CounterSampler::WriteJson(std::string* output)
         {
             return ;
         }
-        entry = samples_.begin()->second;
+        entry = samples_.rbegin()->second;
     }
 
     doc.SetArray();
@@ -99,7 +99,7 @@ void CounterSampler::WriteJson(std::string* output,
             }
             else
             {
-                // FIXME
+                item.PushBack(0, doc.GetAllocator());
             }
         }
         data.PushBack(item, doc.GetAllocator());
@@ -139,6 +139,7 @@ CounterSampler::SampleEntry CounterSampler::DoSnapshotDiff(const Snapshot& lhs, 
         {
             continue;
         }
+
         entry.insert({it->first, it->second - pos->second});
     }
     return entry;
