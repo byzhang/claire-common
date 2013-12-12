@@ -4,6 +4,7 @@
 
 #include <claire/common/events/EventLoop.h>
 
+#include <signal.h>
 #include <sys/eventfd.h>
 
 #include <algorithm>
@@ -42,6 +43,20 @@ int CreateEventfd()
 
     return fd;
 }
+
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+class IgnoreSigPipe
+{
+public:
+    IgnoreSigPipe()
+    {
+        ::signal(SIGPIPE, SIG_IGN);
+        LOG(TRACE) << "Ignore SIGPIPE";
+    }
+};
+#pragma GCC diagnostic error "-Wold-style-cast"
+
+IgnoreSigPipe ignore_sigpipe;
 
 } // namespace
 

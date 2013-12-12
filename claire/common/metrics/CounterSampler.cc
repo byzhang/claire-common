@@ -140,7 +140,14 @@ CounterSampler::SampleEntry CounterSampler::DoSnapshotDiff(const Snapshot& lhs, 
             continue;
         }
 
-        entry.insert({it->first, it->second - pos->second});
+        if (it->second < pos->second)
+        {
+            entry.insert({it->first, INT_MAX - pos->second - it->second}); // FIXME: overflow?
+        }
+        else
+        {
+            entry.insert({it->first, it->second - pos->second});
+        }
     }
     return entry;
 }

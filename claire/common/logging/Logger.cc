@@ -5,6 +5,7 @@
 #include <claire/common/logging/Logger.h>
 
 #include <stdio.h>
+#include <signal.h>
 
 #include <boost/bind.hpp>
 
@@ -53,6 +54,17 @@ void Logger::Append(const char* data, size_t length)
 
 void Logger::ThreadMain()
 {
+    // first ignore unuse signals
+    {
+        sigset_t mask;
+        sigemptyset(&mask);
+        sigaddset(&mask, SIGHUP);
+        sigaddset(&mask, SIGPIPE);
+        sigaddset(&mask, SIGUSR1);
+        sigaddset(&mask, SIGUSR2);
+        sigprocmask(SIG_BLOCK, &mask, NULL);
+    }
+
     assert(running_ = true);
     latch_.CountDown();
 
