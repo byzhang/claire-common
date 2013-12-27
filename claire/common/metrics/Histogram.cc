@@ -154,7 +154,7 @@ void Histogram::Add(int value)
 
 std::unique_ptr<HistogramSamples> Histogram::SnapshotSamples() const
 {
-    return std::move(std::unique_ptr<HistogramSamples>(SnapshotSampleVector().release()));
+    return std::unique_ptr<HistogramSamples>(SnapshotSampleVector().release());
 }
 
 void Histogram::AddSamples(const HistogramSamples& samples)
@@ -247,7 +247,7 @@ std::unique_ptr<SampleVector> Histogram::SnapshotSampleVector() const
 {
     std::unique_ptr<SampleVector> samples(new SampleVector(bucket_ranges()));
     samples->Add(*samples_);
-    return std::move(samples);
+    return samples;
 }
 
 const std::string Histogram::GetSimpleAsciiBucketRange(Sample sample) const
