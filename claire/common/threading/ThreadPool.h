@@ -15,6 +15,7 @@
 #include <claire/common/threading/Mutex.h>
 #include <claire/common/threading/Thread.h>
 #include <claire/common/threading/Condition.h>
+#include <claire/common/tracing/TraceContext.h>
 
 namespace claire {
 
@@ -36,8 +37,10 @@ public:
     void Run(Task&& task);
 
 private:
+    typedef std::pair<TraceContext, Task> Entry;
+
     bool IsFull() const;
-    Task Take();
+    Entry Take();
     void RunInThread();
 
     Mutex mutex_;
@@ -46,7 +49,7 @@ private:
 
     const std::string name_;
     boost::ptr_vector<Thread> threads_;
-    std::deque<Task> queue_;
+    std::deque<Entry> queue_;
     size_t max_queue_size_;
     boost::atomic<bool> running_;
 };

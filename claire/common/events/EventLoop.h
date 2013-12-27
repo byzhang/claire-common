@@ -16,6 +16,7 @@
 #include <claire/common/threading/Mutex.h>
 #include <claire/common/time/Timestamp.h>
 #include <claire/common/events/TimerId.h>
+#include <claire/common/tracing/TraceContext.h>
 
 namespace claire {
 
@@ -92,6 +93,8 @@ public:
     static EventLoop* CurrentLoopInThisThread();
 
 private:
+    typedef std::pair<TraceContext, Task> Entry;
+
     void AbortNotInLoopThread() const;
     void Wakeup();
     void OnWakeup();
@@ -114,7 +117,7 @@ private:
     Channel* current_active_channel_;
 
     Mutex mutex_;
-    std::vector<Task> pending_tasks_; // @GUARDBY mutex_
+    std::vector<Entry> pending_tasks_; // @GUARDBY mutex_
 };
 
 } // namespace claire

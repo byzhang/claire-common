@@ -151,7 +151,7 @@ void EventLoop::Post(const Task& task)
 {
     {
         MutexLock lock(mutex_);
-        pending_tasks_.push_back(task);
+        pending_tasks_.push_back(std::make_pair(ThisThread::GetTraceContext(), task));
     }
 
     if (!IsInLoopThread() || !current_active_channel_) // FIXME
@@ -176,7 +176,7 @@ void EventLoop::Post(Task&& task)
 {
     {
         MutexLock lock(mutex_);
-        pending_tasks_.push_back(std::move(task)); // emplace_back
+        pending_tasks_.push_back(std::make_pair(ThisThread::GetTraceContext(), std::move(task))); // emplace_back
     }
 
     if (!IsInLoopThread() || !current_active_channel_) // FIXME
@@ -256,7 +256,7 @@ void EventLoop::OnWakeup()
 
 void EventLoop::RunPendingTasks()
 {
-    std::vector<Task> tasks;
+    std::vector<Entry> tasks;
     {
         MutexLock lock(mutex_);
         tasks.swap(pending_tasks_);
@@ -264,7 +264,9 @@ void EventLoop::RunPendingTasks()
 
     for (auto it = tasks.begin(); it != tasks.end(); ++it)
     {
-        (*it)();
+        ThisThread::SetTraceContext((*it).first);
+        (*it).second();
+        ThisThread::ResetTraceContext();
     }
 }
 

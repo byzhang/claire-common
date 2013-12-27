@@ -80,7 +80,7 @@ void ThreadPool::Run(const Task& task)
             not_full_.Wait();
         }
 
-        queue_.push_back(task);
+        queue_.push_back(std::make_pair(ThisThread::GetTraceContext(), task));
         not_empty_.Notify();
     }
 }
@@ -99,12 +99,12 @@ void ThreadPool::Run(Task&& task)
             not_full_.Wait();
         }
 
-        queue_.push_back(std::move(task));
+        queue_.push_back(std::make_pair(ThisThread::GetTraceContext(), std::move(task)));
         not_empty_.Notify();
     }
 }
 
-ThreadPool::Task ThreadPool::Take()
+ThreadPool::Entry ThreadPool::Take()
 {
     MutexLock lock(mutex_);
     while (queue_.empty() && running_)
@@ -112,17 +112,17 @@ ThreadPool::Task ThreadPool::Take()
         not_empty_.Wait();
     }
 
-    Task task;
+    Entry entry;
     if (!queue_.empty())
     {
-        task = queue_.front();
+        entry = queue_.front();
         queue_.pop_front();
         if (max_queue_size_ > 0)
         {
             not_full_.Notify();
         }
     }
-    return task;
+    return entry;
 }
 
 bool ThreadPool::IsFull() const
@@ -137,10 +137,12 @@ void ThreadPool::RunInThread()
     {
         while (running_)
         {
-            Task task(Take());
-            if (task)
+            Entry entry(Take());
+            if (entry.second)
             {
-                task();
+                ThisThread::SetTraceContext(entry.first);
+                entry.second();
+                ThisThread::ResetTraceContext();
             }
         }
     }

@@ -42,6 +42,10 @@ set(common_SRCS
     metrics/HistogramRecorder.cc
     metrics/Histogram.cc
     protobuf/ProtobufIO.cc
+    tracing/TraceContext.cc
+    tracing/TraceRecorder.cc
+    tracing/Tracing.cc
+    tracing/Trace.cc
   )
 
 add_library(claire_common ${common_SRCS})
@@ -87,6 +91,7 @@ install(FILES ${SYMBOLIZER_HEADERS} DESTINATION include/claire/common/metrics/)
 file(GLOB PROTOBUF_HEADERS "protobuf/*.h")
 install(FILES ${PROTOBUF_HEADERS} DESTINATION include/claire/common/protobuf/)
 
-if(NOT CMAKE_BUILD_NO_EXAMPLES)
-  add_subdirectory(tests)
-endif()
+file(GLOB PROTOBUF_HEADERS "tracing/*.h")
+install(FILES ${PROTOBUF_HEADERS} DESTINATION include/claire/common/tracing/)
+
+add_subdirectory(tests)
