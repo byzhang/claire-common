@@ -8,6 +8,7 @@
 #include <boost/random/uniform_int_distribution.hpp>
 
 #include <claire/common/tracing/Tracing.h>
+#include <claire/common/logging/Logging.h>
 
 namespace claire {
 
@@ -57,6 +58,7 @@ Trace::Trace(const std::string& name__,
 
 void Trace::Record(const Annotation& annotation)
 {
+    LOG(DEBUG) << "Trace " << trace_id_ << ", " << span_id_ << " " << annotation.value << " at " << annotation.timestamp.MicroSecondsSinceEpoch();
     OutputTrace(*this, annotation);
 }
 
