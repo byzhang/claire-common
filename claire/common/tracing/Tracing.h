@@ -16,6 +16,12 @@
         if (!trace) trace->Record(Annotation(claire::StringPrintf(fmt, ## args))); \
     } while (0)
 
+#define GET_TRACE_BY_TRACEID(trace_id, span_id) \
+    (claire::TraceRecorder::instance()->Find(trace_id, span_id))
+
+#define THISTHREAD_TRACE() \
+    (claire::TraceRecorder::instance()->Find(claire::ThisThread::GetTraceContext()))
+
 #define TRACE_ANNOTATION(annotation) \
     do { \
         auto trace = claire::TraceRecorder::instance()->Find(claire::ThisThread::GetTraceContext()); \
