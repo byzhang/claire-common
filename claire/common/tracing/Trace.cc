@@ -58,18 +58,21 @@ Trace::Trace(const std::string& name__,
 
 void Trace::Record(const Annotation& annotation)
 {
-    LOG(DEBUG) << "Trace " << trace_id_ << ", " << span_id_ << " " << annotation.value << " at " << annotation.timestamp.MicroSecondsSinceEpoch();
+    LOG(DEBUG) << "Trace " << trace_id_ << ", " << span_id_ << " " << annotation.value << " at " << annotation.timestamp.MicroSecondsSinceEpoch()
+               << " for " << host_.service_name;
     OutputTrace(*this, annotation);
 }
 
 void Trace::Record(const BinaryAnnotation& annotation)
 {
+    LOG(DEBUG) << "Trace " << trace_id_ << ", " << span_id_ << " " << annotation.value
+               << " for " << host_.service_name;
     OutputTrace(*this, annotation);
 }
 
 Trace* Trace::MakeChild(const std::string& name__)
 {
-    return FactoryGet(name__, trace_id_, UniqueId(), span_id_);
+    return FactoryGet(name__, trace_id_, span_id_+1, span_id_);
 }
 
 } // namespace claire
