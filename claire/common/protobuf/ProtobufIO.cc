@@ -138,11 +138,19 @@ bool SerializeToJsonValue(const ::google::protobuf::Message& message,
                         if (field->type() == ::google::protobuf::FieldDescriptor::TYPE_BYTES)
                         {
                             auto escaped_data = UriEscape(field_data, EscapeMode::ALL);
-                            value.PushBack(escaped_data.c_str(), allocator);
+                            rapidjson::Value escaped_value(escaped_data.data(),
+                                                           static_cast<unsigned int>(escaped_data.length()),
+                                                           allocator);
+                            
+                            value.PushBack(escaped_value, allocator);
                         }
                         else
                         {
-                            value.PushBack(field_data.c_str(), allocator);
+                            rapidjson::Value field_value(field_data.data(),
+                                                         static_cast<unsigned int>(field_data.length()),
+                                                         allocator);
+                            
+                            value.PushBack(field_value, allocator);
                         }
                     }
                     root->AddMember(field->name().c_str(), value, allocator);
@@ -154,11 +162,19 @@ bool SerializeToJsonValue(const ::google::protobuf::Message& message,
                     if (field->type() == ::google::protobuf::FieldDescriptor::TYPE_BYTES)
                     {
                         auto escaped_data = UriEscape(field_data, EscapeMode::ALL);
-                        root->AddMember(field->name().c_str(), escaped_data.c_str(), allocator);
+                        rapidjson::Value escaped_value(escaped_data.data(),
+                                                       static_cast<unsigned int>(escaped_data.length()),
+                                                       allocator);
+
+                        root->AddMember(field->name().c_str(), escaped_value, allocator);
                     }
                     else
                     {
-                        root->AddMember(field->name().c_str(), field_data.c_str(), allocator);
+                        rapidjson::Value field_value(field_data.data(),
+                                                     static_cast<unsigned int>(field_data.length()),
+                                                     allocator);
+                        
+                        root->AddMember(field->name().c_str(), field_value, allocator);
                     }
                 }
                 break;
