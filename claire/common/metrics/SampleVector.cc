@@ -54,7 +54,7 @@ Count SampleVector::GetCountAtIndex(size_t bucket_index) const
 
 std::unique_ptr<SampleCountIterator> SampleVector::Iterator() const
 {
-    return std::move(std::unique_ptr<SampleCountIterator>(new SampleVectorIterator(&counts_, bucket_ranges_)));
+    return std::unique_ptr<SampleCountIterator>(new SampleVectorIterator(&counts_, bucket_ranges_));
 }
 
 bool SampleVector::AddSubtractImpl(SampleCountIterator* iter,
