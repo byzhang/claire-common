@@ -354,6 +354,27 @@ Status UnlockFile(FileLock* lock)
     return s;
 }
 
+Status WriteStringToFile(const StringPiece& data, const std::string& fname)
+{
+    WritableFile* file;
+    Status s = NewWritableFile(fname, &file);
+    if (s)
+    {
+        return s;
+    }
+    s = file->Append(data);
+    if (s)
+    {
+        s = file->Close();
+    }
+    delete file;  // Will auto-close if we did not close above
+    if (s)
+    {
+        DeleteFile(fname);
+    }
+    return s;
+}
+
 Status ReadFileToString(const std::string& fname, std::string* data)
 {
     data->clear();

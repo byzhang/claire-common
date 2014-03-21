@@ -30,6 +30,7 @@ private:
     void RollFile();
     void DropFileMemory();
     std::string GetLogFileName()  const;
+    std::string GetLinkLogFileName()  const;
     void AppendUnLocked(const char* data, size_t length);
 
     const std::string base_name_;

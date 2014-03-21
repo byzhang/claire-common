@@ -112,30 +112,21 @@ void LogFile::RollFile()
 
         file_.reset(new FileUtil::AppendableFile(name));
 
-        std::string link_path;
-        auto slash = ::strrchr(name.c_str(), '/');
-        if (slash)
-        {
-            link_path = std::string(name, slash-name.c_str()+1);
-        }
-        link_path += base_name_ + ".log";
-
-        if (FileUtil::FileExists(link_path))
+        std::string link_name = GetLinkLogFileName();;
+        if (FileUtil::FileExists(link_name))
         {
             std::string fname;
             uint64_t length;
-            if ((FileUtil::ReadLink(link_path, &fname) == FileUtil::kOk)
+            if ((FileUtil::ReadLink(link_name, &fname) == FileUtil::kOk)
                 && (FileUtil::GetFileSize(fname, &length) == FileUtil::kOk)
                 && (length == 0))
             {
                 FileUtil::DeleteFile(fname);
             }
 
-            FileUtil::DeleteFile(link_path);
+            FileUtil::DeleteFile(link_name);
         }
-
-        auto dst = slash ? (slash+1) : name;
-        FileUtil::SymLink(dst, link_path);
+        FileUtil::SymLink(name, link_name);
     }
 }
 
@@ -167,6 +158,19 @@ std::string LogFile::GetLogFileName() const
     fname += ThisProcess::pid_string();
     fname += ".";
     fname += ThisProcess::User();
+    fname += ".log";
+    return fname;
+}
+
+std::string LogFile::GetLinkLogFileName() const
+{
+    auto fname = FLAGS_log_dir;
+    if (!fname.empty() && *fname.rbegin() != '/')
+    {
+        fname += "/";
+    }
+
+    fname += base_name_;
     fname += ".log";
     return fname;
 }

@@ -189,10 +189,8 @@ int64_t TimeoutQueue::Run(int64_t now)
         // so the callbacks have a chance to call erase
         if (event.repeat_interval >= 0)
         {
-            timeouts_.insert({event.id,
-                              now + event.repeat_interval,
-                              event.repeat_interval,
-                              event.callback});
+            event.expiration = now + event.repeat_interval; // FIXME
+            timeouts_.insert(event);
         }
     }
 

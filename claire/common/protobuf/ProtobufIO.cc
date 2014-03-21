@@ -141,7 +141,6 @@ bool SerializeToJsonValue(const ::google::protobuf::Message& message,
                             rapidjson::Value escaped_value(escaped_data.data(),
                                                            static_cast<unsigned int>(escaped_data.length()),
                                                            allocator);
-                            
                             value.PushBack(escaped_value, allocator);
                         }
                         else
@@ -149,7 +148,6 @@ bool SerializeToJsonValue(const ::google::protobuf::Message& message,
                             rapidjson::Value field_value(field_data.data(),
                                                          static_cast<unsigned int>(field_data.length()),
                                                          allocator);
-                            
                             value.PushBack(field_value, allocator);
                         }
                     }
@@ -165,7 +163,6 @@ bool SerializeToJsonValue(const ::google::protobuf::Message& message,
                         rapidjson::Value escaped_value(escaped_data.data(),
                                                        static_cast<unsigned int>(escaped_data.length()),
                                                        allocator);
-
                         root->AddMember(field->name().c_str(), escaped_value, allocator);
                     }
                     else
@@ -173,7 +170,6 @@ bool SerializeToJsonValue(const ::google::protobuf::Message& message,
                         rapidjson::Value field_value(field_data.data(),
                                                      static_cast<unsigned int>(field_data.length()),
                                                      allocator);
-                        
                         root->AddMember(field->name().c_str(), field_value, allocator);
                     }
                 }
