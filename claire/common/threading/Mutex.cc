@@ -13,28 +13,33 @@ namespace claire {
 Mutex::Mutex()
     : holder_(0)
 {
+#ifndef NDEBUG
+    DCHECK_ERR(pthread_mutexattr_init(&attr_));
+    DCHECK_ERR(pthread_mutexattr_settype(&attr_, PTHREAD_MUTEX_ERRORCHECK));
+    DCHECK_ERR(pthread_mutex_init(&mutex_, &attr_));
+#else
     DCHECK_ERR(pthread_mutex_init(&mutex_, NULL));
+#endif
 }
 
 Mutex::~Mutex()
 {
     DCHECK_ERR(pthread_mutex_destroy(&mutex_));
+#ifndef NDEBUG
+    DCHECK_ERR(pthread_mutexattr_destroy(&attr_));
+#endif
 }
 
 void Mutex::Lock()
 {
-    //PROFILE_MUTEX_START_LOCK();
     DCHECK_ERR(pthread_mutex_lock(&mutex_));
     AssignHolder();
-    //PROFILE_MUTEX_LOCKED();
 }
 
 void Mutex::Unlock()
 {
-    //PROFILE_MUTEX_START_UNLOCK();
     UnAssignHolder();
     DCHECK_ERR(pthread_mutex_unlock(&mutex_));
-    //PROFILE_MUTEX_UNLOCKED();
 }
 
 bool Mutex::IsLockedByThisThread() const
