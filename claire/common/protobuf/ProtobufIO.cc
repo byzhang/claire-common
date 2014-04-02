@@ -224,18 +224,18 @@ bool ParseFromJsonValue(const rapidjson::Value& root,
         fields.push_back(descriptor->field(i));
     }
 
-    for (int i = 0; i < descriptor->extension_range_count(); ++i)
-    {
-        const auto range = descriptor->extension_range(i);
-        for (auto tag = range->start; tag < range->end; ++tag)
-        {
-            auto field = reflection->FindKnownExtensionByNumber(tag);
-            if (field)
-            {
-                fields.push_back(field);
-            }
-        }
-    }
+    //for (int i = 0; i < descriptor->extension_range_count(); ++i)
+    //{
+    //    const auto range = descriptor->extension_range(i);
+    //    for (auto tag = range->start; tag < range->end; ++tag)
+    //    {
+    //        auto field = reflection->FindKnownExtensionByNumber(tag);
+    //        if (field)
+    //        {
+    //            fields.push_back(field);
+    //        }
+    //    }
+    //}
 
     for (auto it = fields.begin(); it != fields.end(); ++it)
     {
@@ -367,7 +367,7 @@ bool ParseFromJsonValue(const rapidjson::Value& root,
 
                         const auto enum_value_descriptor =
                             field->enum_type()->FindValueByNumber(item->GetInt());
-                        if (enum_value_descriptor)
+                        if (!enum_value_descriptor)
                         {
                             LOG(ERROR) << "invalid value for enum field " << field->full_name() << " .";
                             return false;
@@ -385,7 +385,7 @@ bool ParseFromJsonValue(const rapidjson::Value& root,
 
                     const auto enum_value_descriptor =
                         field->enum_type()->FindValueByNumber(value.GetInt());
-                    if (enum_value_descriptor)
+                    if (!enum_value_descriptor)
                     {
                         LOG(ERROR) << "invalid value for enum field " << field->full_name() << " .";
                         return false;
