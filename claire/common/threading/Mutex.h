@@ -48,6 +48,9 @@ private:
     void UnAssignHolder();
 
     pthread_mutex_t mutex_;
+#ifndef NDEBUG
+    pthread_mutexattr_t attr_;
+#endif
     pid_t holder_;
 };
 
