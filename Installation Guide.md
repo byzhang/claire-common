@@ -12,7 +12,7 @@ It depends serveral library:
 
 - [gflags][3]: claire-common use gflags to configure it, such as logging module. 
 
-- [gtest][4]: claire-common unittest use it. see more informatio [here][5]
+- [gtest][4]: claire-common unittest use it. see more information [here][5]
 
 - [protobuf][6]: claire-common include a moudule to support json <--> protobuf conversion, so need it, please use version bigger than 2.5.
 
