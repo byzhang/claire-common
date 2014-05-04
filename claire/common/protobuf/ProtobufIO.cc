@@ -505,7 +505,7 @@ bool ParseFromJson(const StringPiece& json,
     rapidjson::Document root;
     if (root.Parse<0>(json.data()).HasParseError())
     {
-        LOG(ERROR) << "parse json failed: " << StringPiece(root.GetParseError());
+        LOG(ERROR) << "parse json failed: " << root.GetParseError();
         return false;
     }
 

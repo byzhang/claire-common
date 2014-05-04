@@ -27,6 +27,7 @@
 #include <elf.h>
 #include <link.h>  // For ElfW()
 
+#include <boost/noncopyable.hpp>
 #include <claire/common/base/Likely.h>
 #include <claire/common/strings/StringPiece.h>
 #include <claire/common/logging/Logging.h>

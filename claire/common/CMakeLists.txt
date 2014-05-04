@@ -4,11 +4,11 @@ add_custom_command(OUTPUT EscapeTables.cc
   VERBATIM )
 
 set(common_SRCS
-    logging/LogFile.cc
-    logging/LogStream.cc
-    logging/LogBuffer.cc
-    logging/LogMessage.cc
-    logging/Logger.cc
+    # logging/LogFile.cc
+    # logging/LogStream.cc
+    # logging/LogBuffer.cc
+    # logging/LogMessage.cc
+    # logging/Logger.cc
     logging/Logging.cc
     strings/StringPiece.cc
     strings/StringUtil.cc
@@ -52,7 +52,7 @@ add_library(claire_common ${common_SRCS})
 target_link_libraries(claire_common gflags protobuf pthread rt)
 
 install(TARGETS claire_common DESTINATION lib)
-file(GLOB LOGGING_HEADERS "logging/*.h")
+file(GLOB LOGGING_HEADERS "logging/Logging.h")
 install(FILES ${LOGGING_HEADERS} DESTINATION include/claire/common/logging/)
 
 file(GLOB STRINGS_HEADERS "strings/*.h")

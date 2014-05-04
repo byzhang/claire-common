@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
     StringPiece name;
     Dwarf::LocationInfo location;
     CHECK(s.Symbolize(reinterpret_cast<uintptr_t>(main), &name, &location));
-    LOG(INFO) << name << " " << location.file.ToString() << " " << location.line << " ("
+    LOG(INFO) << name.data() << " " << location.file.ToString() << " " << location.line << " ("
               << location.main_file.ToString() << ")";
     return 0;
 }
