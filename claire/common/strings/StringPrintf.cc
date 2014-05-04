@@ -43,7 +43,7 @@ static void StringAppendVT(StringType* dst,
     }
 
     // Repeatedly increase buffer size until it fits.
-    int mem_length = sizeof(stack_buf)/sizeof(stack_buf[0]);
+    int mem_length = static_cast<int>(sizeof(stack_buf)/sizeof(stack_buf[0]));
     while (true)
     {
         if (result < 0) {

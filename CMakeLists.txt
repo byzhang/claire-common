@@ -24,6 +24,7 @@ set(CXX_FLAGS
  -Wwrite-strings
  -rdynamic
  -std=c++0x
+ -msse4.2
  )
 
 string(REPLACE ";" " " CMAKE_CXX_FLAGS "${CXX_FLAGS}")
