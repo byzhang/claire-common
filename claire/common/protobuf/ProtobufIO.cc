@@ -377,14 +377,14 @@ bool ParseFromJsonValue(const rapidjson::Value& root,
                 }
                 else
                 {
-                    if (!value.IsInt())
+                    if (!value.IsString())
                     {
                         LOG(ERROR) << "invalid type for field " << field->full_name() << " .";
                         return false;
                     }
 
                     const auto enum_value_descriptor =
-                        field->enum_type()->FindValueByNumber(value.GetInt());
+                        field->enum_type()->FindValueByName(value.GetString());
                     if (!enum_value_descriptor)
                     {
                         LOG(ERROR) << "invalid value for enum field " << field->full_name() << " .";
