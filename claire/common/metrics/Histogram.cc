@@ -180,13 +180,13 @@ void Histogram::WriteJSON(std::string* output) const
 {
     rapidjson::Document doc;
     doc.SetObject();
-    doc.AddMember("name", histogram_name().c_str(), doc.GetAllocator());
+    doc.AddMember("name", rapidjson::StringRef(histogram_name().c_str()), doc.GetAllocator());
 
     auto snapshot = SnapshotSampleVector();
     doc.AddMember("count", snapshot->TotalCount(), doc.GetAllocator());
     doc.AddMember("sum", snapshot->sum(), doc.GetAllocator());
 
-    doc.AddMember("type", type().c_str(), doc.GetAllocator());
+    doc.AddMember("type", rapidjson::StringRef(type().c_str()), doc.GetAllocator());
     doc.AddMember("min", declared_min(), doc.GetAllocator());
     doc.AddMember("max", declared_max(), doc.GetAllocator());
     doc.AddMember("bucket_count", bucket_count(), doc.GetAllocator());

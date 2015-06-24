@@ -2,12 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 
-#include <google/protobuf/message.h>
-#include <google/protobuf/descriptor.h>
+#include "google/protobuf/message.h"
+#include "google/protobuf/descriptor.h"
 
-#include <rapidjson/document.h>
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/prettywriter.h>
+#include "rapidjson/document.h"
+#include "rapidjson/error/en.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/prettywriter.h"
 
 #include <vector>
 
@@ -47,90 +48,71 @@ bool SerializeToJsonValue(const ::google::protobuf::Message& message,
         switch (field->cpp_type())
         {
             #undef HANDLE_CASE_CPP_TYPE
-            #define HANDLE_CASE_CPP_TYPE(cpptype, method)                           \
+            #define HANDLE_CASE_CPP_TYPE(cpptype, jsontype, method)                 \
             case ::google::protobuf::FieldDescriptor::CPPTYPE_##cpptype:            \
             {                                                                       \
+                rapidjson::Value key;                                               \
+                key.SetString(field->name().c_str(),                                \
+                              static_cast<unsigned int>(field->name().length()));   \
+                rapidjson::Value value;                                             \
                 if (field->is_repeated())                                           \
                 {                                                                   \
-                    rapidjson::Value value(rapidjson::kArrayType);                  \
+                    value.SetArray();                                               \
                     for (int i = 0; i < reflection->FieldSize(message, field); ++i) \
                     {                                                               \
                         value.PushBack(                                             \
                                 reflection->GetRepeated##method(message, field, i), \
                                 allocator);                                         \
                     }                                                               \
-                    root->AddMember(field->name().c_str(), value, allocator);       \
                 }                                                                   \
                 else                                                                \
                 {                                                                   \
-                    root->AddMember(field->name().c_str(),                          \
-                                    reflection->Get##method(message, field),        \
-                                    allocator);                                     \
+                    value.Set##jsontype(reflection->Get##method(message, field));   \
                 }                                                                   \
+                root->AddMember(key, value, allocator);                             \
                 break;                                                              \
             }
-            HANDLE_CASE_CPP_TYPE(INT32,  Int32);
-            HANDLE_CASE_CPP_TYPE(UINT32, UInt32);
-            HANDLE_CASE_CPP_TYPE(FLOAT,  Float);
-            HANDLE_CASE_CPP_TYPE(DOUBLE, Double);
-            HANDLE_CASE_CPP_TYPE(BOOL,   Bool);
-
-            #undef HANDLE_CASE_CPP_TYPE
-            #define HANDLE_CASE_CPP_TYPE(cpptype, method)                           \
-            case ::google::protobuf::FieldDescriptor::CPPTYPE_##cpptype:            \
-            {                                                                       \
-                if (field->is_repeated())                                           \
-                {                                                                   \
-                    rapidjson::Value value(rapidjson::kArrayType);                  \
-                    for (int i = 0; i < reflection->FieldSize(message, field); ++i) \
-                    {                                                               \
-                        auto number = boost::lexical_cast<std::string>(             \
-                            reflection->GetRepeated##method(message, field, i));    \
-                        value.PushBack(number.c_str(), allocator);                  \
-                    }                                                               \
-                    root->AddMember(field->name().c_str(), value, allocator);       \
-                }                                                                   \
-                else                                                                \
-                {                                                                   \
-                    auto number = boost::lexical_cast<std::string>(                 \
-                        reflection->Get##method(message, field));                   \
-                    root->AddMember(field->name().c_str(),                          \
-                                    number.c_str(),                                 \
-                                    allocator);                                     \
-                }                                                                   \
-                break;                                                              \
-            }
-            HANDLE_CASE_CPP_TYPE(INT64,  Int64);
-            HANDLE_CASE_CPP_TYPE(UINT64, UInt64);
+            HANDLE_CASE_CPP_TYPE(INT32,  Int,    Int32);
+            HANDLE_CASE_CPP_TYPE(UINT32, Uint,   UInt32);
+            HANDLE_CASE_CPP_TYPE(FLOAT,  Double, Float);
+            HANDLE_CASE_CPP_TYPE(DOUBLE, Double, Double);
+            HANDLE_CASE_CPP_TYPE(BOOL,   Bool,   Bool);
+            HANDLE_CASE_CPP_TYPE(INT64,  Int64,  Int64);
+            HANDLE_CASE_CPP_TYPE(UINT64, Uint64, UInt64);
             #undef HANDLE_CASE_CPP_TYPE
 
             case ::google::protobuf::FieldDescriptor::CPPTYPE_ENUM:
             {
+                rapidjson::Value key;
+                key.SetString(field->name().c_str(), static_cast<unsigned int>(field->name().length()));
+
+                rapidjson::Value value;
                 if (field->is_repeated())
                 {
-                    rapidjson::Value value(rapidjson::kArrayType);
+                    value.SetArray();
                     for (int i = 0;i < reflection->FieldSize(message, field); ++i)
                     {
-                        value.PushBack(
-                                reflection->GetRepeatedEnum(message, field, i)->number(),
-                                allocator);
+                        rapidjson::Value item(reflection->GetRepeatedEnum(message, field, i)->number());
+                        value.PushBack(item, allocator);
                     }
-                    root->AddMember(field->name().c_str(), value, allocator);
                 }
                 else
                 {
-                    root->AddMember(field->name().c_str(),
-                                   reflection->GetEnum(message, field)->number(),
-                                   allocator);
+                    value.SetInt(reflection->GetEnum(message, field)->number());
                 }
+                root->AddMember(key, value, allocator);
                 break;
             }
 
             case ::google::protobuf::FieldDescriptor::CPPTYPE_STRING:
             {
+                rapidjson::Value key;
+                key.SetString(field->name().c_str(), static_cast<unsigned int>(field->name().length()));
+
+                rapidjson::Value value;
                 if (field->is_repeated())
                 {
-                    rapidjson::Value value(rapidjson::kArrayType);
+                    value.SetArray();
                     for (int i = 0;i < reflection->FieldSize(message, field); ++i)
                     {
                         auto field_data =
@@ -151,28 +133,21 @@ bool SerializeToJsonValue(const ::google::protobuf::Message& message,
                             value.PushBack(field_value, allocator);
                         }
                     }
-                    root->AddMember(field->name().c_str(), value, allocator);
                 }
                 else
                 {
-                    auto field_data =
-                        reflection->GetStringReference(message, field, NULL);
+                    auto field_data = reflection->GetStringReference(message, field, NULL);
                     if (field->type() == ::google::protobuf::FieldDescriptor::TYPE_BYTES)
                     {
                         auto escaped_data = UriEscape(field_data, EscapeMode::ALL);
-                        rapidjson::Value escaped_value(escaped_data.data(),
-                                                       static_cast<unsigned int>(escaped_data.length()),
-                                                       allocator);
-                        root->AddMember(field->name().c_str(), escaped_value, allocator);
+                        value.SetString(escaped_data.data(), static_cast<unsigned int>(escaped_data.length()));
                     }
                     else
                     {
-                        rapidjson::Value field_value(field_data.data(),
-                                                     static_cast<unsigned int>(field_data.length()),
-                                                     allocator);
-                        root->AddMember(field->name().c_str(), field_value, allocator);
+                        value.SetString(field_data.data(), static_cast<unsigned int>(field_data.length()));
                     }
                 }
+                root->AddMember(key, value, allocator);
                 break;
             }
 
@@ -204,7 +179,7 @@ bool SerializeToJsonValue(const ::google::protobuf::Message& message,
                         return false;
                     }
                 }
-                root->AddMember(field->name().c_str(), value, allocator);
+                root->AddMember(rapidjson::Value(field->name().c_str(), allocator), value, allocator);
                 break;
             }
         }
@@ -264,33 +239,33 @@ bool ParseFromJsonValue(const rapidjson::Value& root,
         switch (field->cpp_type())
         {
             #undef HANDLE_CASE_CPP_TYPE
-            #define HANDLE_CASE_CPP_TYPE(cpptype, method, jsontype, valuetype)  \
-            case ::google::protobuf::FieldDescriptor::CPPTYPE_##cpptype:        \
-            {                                                                   \
-                if (field->is_repeated())                                       \
-                {                                                               \
-                    for (auto item = value.Begin();                             \
-                         item != value.End();                                   \
-                         ++item)                                                \
-                    {                                                           \
-                        if (!item->Is##jsontype())                              \
-                        {                                                       \
-                            LOG(ERROR) << "invalid type for field "             \
-                                       << field->full_name() << " .";           \
-                            return false;                                       \
-                        }                                                       \
-                        reflection->Add##method(message,                        \
-                                field,                                          \
-                                static_cast<valuetype>(item->Get##jsontype())); \
-                    }                                                           \
-                }                                                               \
-                else                                                            \
-                {                                                               \
-                    reflection->Set##method(message,                            \
-                            field,                                              \
-                            static_cast<valuetype>(value.Get##jsontype()));     \
-                }                                                               \
-                break;                                                          \
+            #define HANDLE_CASE_CPP_TYPE(cpptype, method, jsontype, valuetype)                  \
+            case ::google::protobuf::FieldDescriptor::CPPTYPE_##cpptype:                        \
+            {                                                                                   \
+                if (field->is_repeated())                                                       \
+                {                                                                               \
+                    for (auto item = value.Begin();                                             \
+                         item != value.End();                                                   \
+                         ++item)                                                                \
+                    {                                                                           \
+                        if (!item->Is##jsontype())                                              \
+                        {                                                                       \
+                            LOG(ERROR) << "invalid type for field "                             \
+                                       << field->full_name() << " .";                           \
+                            return false;                                                       \
+                        }                                                                       \
+                        reflection->Add##method(message,                                        \
+                                                field,                                          \
+                                                static_cast<valuetype>(item->Get##jsontype())); \
+                    }                                                                           \
+                }                                                                               \
+                else                                                                            \
+                {                                                                               \
+                    reflection->Set##method(message,                                            \
+                                            field,                                              \
+                                            static_cast<valuetype>(value.Get##jsontype()));     \
+                }                                                                               \
+                break;                                                                          \
             }
             HANDLE_CASE_CPP_TYPE(INT32,  Int32,  Int,    int);
             HANDLE_CASE_CPP_TYPE(UINT32, UInt32, Uint,   unsigned int);
@@ -299,55 +274,52 @@ bool ParseFromJsonValue(const rapidjson::Value& root,
             HANDLE_CASE_CPP_TYPE(BOOL,   Bool,   Bool,   bool);
             #undef HANDLE_CASE_CPP_TYPE
 
-            #define HANDLE_CASE_CPP_TYPE(cpptype, method, jsontype, valuetype) \
-            case ::google::protobuf::FieldDescriptor::CPPTYPE_##cpptype:       \
-            {                                                                  \
-                if (field->is_repeated())                                      \
-                {                                                              \
-                    for (auto item = value.Begin();                            \
-                         item != value.End();                                  \
-                         ++item)                                               \
-                    {                                                          \
-                        if (item->Is##jsontype())                              \
-                        {                                                      \
-                            reflection->Add##method(message,                   \
-                                field, item->Get##jsontype());                 \
-                        }                                                      \
-                        else if (item->IsString())                             \
-                        {                                                      \
-                            auto number = boost::lexical_cast<valuetype>(      \
-                                item->GetString());                            \
-                            reflection->Add##method(message, field, number);   \
-                        }                                                      \
-                        else                                                   \
-                        {                                                      \
-                            LOG(ERROR) << "invalid type for field "            \
-                                       << field->full_name() << " .";          \
-                            return false;                                      \
-                        }                                                      \
-                    }                                                          \
-                }                                                              \
-                else                                                           \
-                {                                                              \
-                   if (value.Is##jsontype())                                   \
-                   {                                                           \
-                       reflection->Set##method(message, field,                 \
-                            value.Get##jsontype());                            \
-                   }                                                           \
-                   else if (value.IsString())                                  \
-                   {                                                           \
-                       valuetype number  =                                     \
-                            boost::lexical_cast<valuetype>(value.GetString()); \
-                       reflection->Set##method(message, field, number);        \
-                   }                                                           \
-                   else                                                        \
-                   {                                                           \
-                       LOG(ERROR) << "invalid type for field "                 \
-                                  << field->full_name() << " .";               \
-                       return false;                                           \
-                   }                                                           \
-                }                                                              \
-                break;                                                         \
+            #define HANDLE_CASE_CPP_TYPE(cpptype, method, jsontype, valuetype)                  \
+            case ::google::protobuf::FieldDescriptor::CPPTYPE_##cpptype:                        \
+            {                                                                                   \
+                if (field->is_repeated())                                                       \
+                {                                                                               \
+                    for (auto item = value.Begin();                                             \
+                         item != value.End();                                                   \
+                         ++item)                                                                \
+                    {                                                                           \
+                        if (item->Is##jsontype())                                               \
+                        {                                                                       \
+                            reflection->Add##method(message,                                    \
+                                                    field,                                      \
+                                                    item->Get##jsontype());                     \
+                        }                                                                       \
+                        else if (item->IsString())                                              \
+                        {                                                                       \
+                            auto number = boost::lexical_cast<valuetype>(item->GetString());    \
+                            reflection->Add##method(message, field, number);                    \
+                        }                                                                       \
+                        else                                                                    \
+                        {                                                                       \
+                            LOG(ERROR) << "invalid type for field "                             \
+                                       << field->full_name() << " .";                           \
+                            return false;                                                       \
+                        }                                                                       \
+                    }                                                                           \
+                }                                                                               \
+                else                                                                            \
+                {                                                                               \
+                   if (value.Is##jsontype())                                                    \
+                   {                                                                            \
+                       reflection->Set##method(message, field, value.Get##jsontype());          \
+                   }                                                                            \
+                   else if (value.IsString())                                                   \
+                   {                                                                            \
+                       valuetype number  = boost::lexical_cast<valuetype>(value.GetString());   \
+                       reflection->Set##method(message, field, number);                         \
+                   }                                                                            \
+                   else                                                                         \
+                   {                                                                            \
+                       LOG(ERROR) << "invalid type for field " << field->full_name() << " .";   \
+                       return false;                                                            \
+                   }                                                                            \
+                }                                                                               \
+                break;                                                                          \
             }
             HANDLE_CASE_CPP_TYPE(INT64,  Int64,  Int64,  int64_t);
             HANDLE_CASE_CPP_TYPE(UINT64, UInt64, Uint64, uint64_t);
@@ -505,7 +477,7 @@ bool ParseFromJson(const StringPiece& json,
     rapidjson::Document root;
     if (root.Parse<0>(json.data()).HasParseError())
     {
-        LOG(ERROR) << "parse json failed: " << root.GetParseError();
+        LOG(ERROR) << "parse json failed: " << GetParseError_En(root.GetParseError());
         return false;
     }
 
